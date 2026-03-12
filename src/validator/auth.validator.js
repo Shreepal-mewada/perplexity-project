@@ -30,3 +30,15 @@ export const registerValidationRules = [
     .withMessage("Password must be at least 8 characters"),
     validate
 ];
+
+export const loginValidationRules = [
+  body("email")
+    .trim() 
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be valid")
+    .normalizeEmail(),
+  body("password").notEmpty().withMessage("Password is required"),
+  validate
+];
