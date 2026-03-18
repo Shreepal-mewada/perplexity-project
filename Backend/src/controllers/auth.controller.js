@@ -132,7 +132,7 @@ export async function loginUser(req, res) {
   };
 
   res.cookie("refreshToken", refreshToken, cookieOptions);
-  // res.cookie("token", accessToken, cookieOptions);
+  res.cookie("token", accessToken, cookieOptions);
 
   res.status(200).json({
     message: "Login successful",
@@ -286,6 +286,7 @@ export async function refreshToken(req, res) {
   };
 
   res.cookie("refreshToken", newRefreshToken, cookieOptions);
+   res.cookie("token", accessToken, cookieOptions);
 
   return res.status(200).json({
     message: "Token refreshed successfully",

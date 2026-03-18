@@ -39,12 +39,12 @@ function Login() {
         </h2>
         <p className="text-gray-400 text-center mb-6">Login to your account</p>
 
-       {/* error message */}
+       {/* error message
         {error && (
           <div className="bg-red-500/10 text-red-400 border border-red-500/30 p-2 rounded mb-4 text-sm text-center">
             {error}
           </div>
-        )}
+        )} */}
 
 
         {/* form */}
