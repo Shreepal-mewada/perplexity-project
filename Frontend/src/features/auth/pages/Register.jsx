@@ -12,7 +12,7 @@ function Register() {
   const loading = useSelector((state) => state.auth.loading);
   // const user = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
-  const message = useSelector((state) => state.auth.message);
+  // const message = useSelector((state) => state.auth.message);
   // const error = useSelector((state) => state.auth.error);
 
   const { handleRegister } = useAuth();
@@ -26,7 +26,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const result = await handleRegister({ username, email, password });
+    await handleRegister({ username, email, password });
     // console.log(user);
     // console.log(result);
     // console.log(error);

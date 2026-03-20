@@ -18,7 +18,7 @@ function App() {
       }
       setAuthLoading(false);
     })();
-  }, []);
+  }, [handleRefresh, handleGetme]);
 
   if (authLoading) {
     return <div>Loading...</div>;

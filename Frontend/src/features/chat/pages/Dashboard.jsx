@@ -1,19 +1,21 @@
 import { useChat } from "../hooks/useChat";
 import { useEffect, useMemo, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import Sidebar from "../components/Sidebar";
+import CollapsedSidebar from "../components/CollapsedSidebar";
 import ChatArea from "../components/ChatArea";
 import InputBar from "../components/InputBar";
 import RightPanel from "../components/RightPanel";
+import CollapsedRightPanel from "../components/CollapsedRightPanel";
 
 function Dashboard() {
   const chat = useChat();
-  const dispatch = useDispatch();
   const { chats, currentChatId, isLoading } = useSelector(
     (state) => state.chat,
   );
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar
+  const [sidebarVisibleDesktop, setSidebarVisibleDesktop] = useState(true); // Desktop sidebar
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -70,22 +72,44 @@ function Dashboard() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col md:flex-row">
-      <Sidebar
-        chats={filteredChats}
-        activeChat={activeChat}
-        onSelectChat={handleSelectChat}
-        onNewChat={handleNewChat}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={setSidebarOpen}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      {/* Sidebar or Collapsed Sidebar - Fixed width with transitions */}
+      {sidebarVisibleDesktop ? (
+        <div className="transition-all duration-300">
+          <Sidebar
+            chats={filteredChats}
+            activeChat={activeChat}
+            onSelectChat={handleSelectChat}
+            onNewChat={handleNewChat}
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={setSidebarOpen}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            sidebarVisibleDesktop={sidebarVisibleDesktop}
+            onToggleSidebarDesktop={() =>
+              setSidebarVisibleDesktop(!sidebarVisibleDesktop)
+            }
+          />
+        </div>
+      ) : (
+        <div className="transition-all duration-300">
+          <CollapsedSidebar
+            onToggleSidebar={() => setSidebarVisibleDesktop(true)}
+            onNewChat={handleNewChat}
+            chats={filteredChats}
+            activeChat={activeChat}
+            onSelectChat={handleSelectChat}
+          />
+        </div>
+      )}
 
-      <div className="flex flex-col flex-1 w-full overflow-hidden">
+      {/* Main Chat Area - Flexible width that expands when panels close */}
+      <div className="flex flex-col flex-1 w-full min-w-0 overflow-hidden transition-all duration-300">
         <ChatArea
           messages={activeChat?.messages || []}
           loading={isLoading}
           currentTitle={activeChat?.title || "New Chat"}
+          rightPanelVisible={rightPanelOpen}
+          onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
         />
         <InputBar
           onSendMessage={handleSendMessage}
@@ -94,11 +118,20 @@ function Dashboard() {
         />
       </div>
 
-      {rightPanelOpen && (
-        <RightPanel
-          isOpen={rightPanelOpen}
-          sources={[]}
-          relatedQuestions={[]}
+      {/* Right Insights Panel or Collapsed Right Panel */}
+      {rightPanelOpen ? (
+        <div className="transition-all duration-300">
+          <RightPanel
+            isOpen={rightPanelOpen}
+            sources={[]}
+            relatedQuestions={[]}
+            rightPanelVisible={rightPanelOpen}
+            onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
+          />
+        </div>
+      ) : (
+        <CollapsedRightPanel
+          onToggleRightPanel={() => setRightPanelOpen(true)}
         />
       )}
     </div>

@@ -12,11 +12,10 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
     },
     password: { type: String, required: true },
-    verified: { type: Boolean, default: false },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 userSchema.pre("save", async function () {
