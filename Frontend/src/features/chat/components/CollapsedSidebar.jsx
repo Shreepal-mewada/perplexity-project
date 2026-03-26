@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { ChevronRight, Plus, History } from "lucide-react";
 
 const CollapsedSidebar = ({
   onToggleSidebar = () => {},
@@ -7,33 +6,33 @@ const CollapsedSidebar = ({
   chats = [],
   activeChat,
   onSelectChat = () => {},
-}) => { 
+}) => {
   const [showChatList, setShowChatList] = useState(false);
 
   return (
     <>
       {/* Collapsed Sidebar */}
-      <aside className="hidden md:flex h-screen w-20 border-r border-slate-700 bg-slate-900/95 backdrop-blur-xl flex-col items-center py-4 gap-4 shrink-0">
+      <aside className="hidden md:flex h-screen w-14 border-r border-white/5 bg-surface-container backdrop-blur-xl flex-col items-center py-2 gap-2.5 shrink-0">
         {/* Expand Sidebar Button */}
         <button
           onClick={onToggleSidebar}
-          className="p-3 hover:bg-slate-700 rounded-lg transition text-slate-400 hover:text-white"
+          className="p-2 hover:bg-white/10 rounded-lg transition text-white/80 hover:text-white/80"
           title="Show sidebar"
         >
-          <ChevronRight size={20} />
+          <span className="material-symbols-outlined">chevron_right</span>
         </button>
 
         {/* Divider */}
-        <div className="w-8 h-px bg-slate-700"></div>
+        <div className="w-6 h-px bg-white/10"></div>
 
         {/* New Chat Button */}
         <button
           onClick={onNewChat}
-          className="p-3 hover:bg-slate-700 rounded-lg transition text-slate-400 hover:text-white relative group"
+          className="p-2 hover:bg-white/10 rounded-lg transition text-white/80 hover:text-primary relative group"
           title="New chat"
         >
-          <Plus size={20} />
-          <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+          <span className="material-symbols-outlined">add_circle</span>
+          <div className="absolute left-full ml-2 px-2 py-1 bg-surface-container border border-white/10 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
             New chat
           </div>
         </button>
@@ -41,11 +40,11 @@ const CollapsedSidebar = ({
         {/* Chat History Button */}
         <button
           onClick={() => setShowChatList(!showChatList)}
-          className="p-3 hover:bg-slate-700 rounded-lg transition text-slate-400 hover:text-white relative group"
+          className="p-2 hover:bg-white/10 rounded-lg transition text-white/80 hover:text-secondary relative group"
           title="Chat history"
         >
-          <History size={20} />
-          <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+          <span className="material-symbols-outlined">history</span>
+          <div className="absolute left-full ml-2 px-2 py-1 bg-surface-container border border-white/10 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
             History
           </div>
         </button>
@@ -61,10 +60,12 @@ const CollapsedSidebar = ({
           />
 
           {/* Dropdown Menu */}
-          <div className="hidden md:flex absolute left-20 top-0 z-30 h-screen w-64 border-r border-slate-700 bg-slate-900/95 backdrop-blur-xl flex-col">
+          <div className="hidden md:flex absolute left-20 top-0 z-30 h-screen w-64 border-r border-white/5 bg-surface-container/95 backdrop-blur-xl flex-col">
             {/* Header */}
-            <div className="border-b border-slate-700 p-4 shrink-0">
-              <h3 className="text-sm font-semibold text-white">Chat History</h3>
+            <div className="border-b border-white/5 p-4 shrink-0">
+              <h3 className="text-sm font-semibold text-white/80">
+                Chat History
+              </h3>
             </div>
 
             {/* Chat List */}
@@ -79,19 +80,19 @@ const CollapsedSidebar = ({
                     }}
                     className={`w-full rounded-lg text-left px-3 py-2 text-xs transition ${
                       activeChat?.id === chat.id
-                        ? "bg-cyan-500/10 border border-cyan-400/40 text-white"
-                        : "bg-slate-800/50 text-slate-300 hover:bg-slate-800"
+                        ? "bg-primary/10 border border-primary/30 text-white/80 shadow-lg shadow-primary/10"
+                        : "bg-white/5 text-white/80 border border-white/10 hover:border-white/20 hover:bg-white/10"
                     }`}
                     title={chat.title}
                   >
                     <p className="truncate font-medium">{chat.title}</p>
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      {new Date(chat.lastUpdated).toLocaleDateString()}
+                    <p className="text-[10px] text-white/80 mt-1">
+                      {chat.time}
                     </p>
                   </button>
                 ))
               ) : (
-                <p className="px-3 py-4 text-xs text-slate-400 text-center">
+                <p className="px-3 py-4 text-xs text-white/80 text-center">
                   No chats yet
                 </p>
               )}

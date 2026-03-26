@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
-import { Sparkles } from "lucide-react";
 
 const ChatArea = ({
   messages = [],
@@ -19,40 +18,51 @@ const ChatArea = ({
 
   const isEmpty = !messages || messages.length === 0;
 
+  //
+
   return (
-    <div className="flex flex-col h-full w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+    <div className="flex flex-col h-full w-full min-h-0 bg-[#212121] overflow-hidden text-sm">
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full px-3 md:px-6 py-4 md:py-6 min-h-0 scrollbar-styled">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden w-full px-4 md:px-4 py-3 md:py-4 min-h-0 scrollbar-styled">
         {isEmpty ? (
-          <div className="flex h-full items-center justify-center px-2">
+          <div className="flex h-full items-center justify-center px-4 md:px-2">
             <div className="mx-auto max-w-3xl text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 shadow-lg shadow-cyan-500/20">
-                <Sparkles size={34} />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-primary shadow-lg shadow-primary/20">
+                <span className="material-symbols-outlined text-5xl">
+                  sparkles
+                </span>
               </div>
-              <h2 className="text-xl md:text-2xl lg:text-4xl font-bold text-white">
+              <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-white/80 font-headline">
                 Ask anything...
               </h2>
-              <p className="mx-auto mt-3 max-w-xl text-xs md:text-sm leading-6 md:leading-7 text-slate-400">
-                Get instant answers, create content, and explore ideas
+              <p className="mx-auto mt-2 max-w-xl text-xs md:text-sm leading-5 md:leading-6 text-white/80">
+                Get instant answers, create content, and explore ideas with
+                Zyricon AI
               </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                <button className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-700/50 px-3 md:px-4 py-2 text-xs md:text-sm text-slate-300 transition hover:border-cyan-400/50 hover:bg-cyan-500/10 hover:text-white">
-                  <span>💡</span>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-2 md:px-3 py-1.5 text-xs md:text-sm text-white/80 transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">
+                  <span className="material-symbols-outlined text-base">
+                    lightbulb
+                  </span>
                   <span>Explain React</span>
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-700/50 px-3 md:px-4 py-2 text-xs md:text-sm text-slate-300 transition hover:border-cyan-400/50 hover:bg-cyan-500/10 hover:text-white">
-                  <span>🔧</span>
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-2 md:px-3 py-1.5 text-xs md:text-sm text-white/80 transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">
+                  <span className="material-symbols-outlined text-base">
+                    build
+                  </span>
                   <span>Fix my code</span>
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-700/50 px-3 md:px-4 py-2 text-xs md:text-sm text-slate-300 transition hover:border-cyan-400/50 hover:bg-cyan-500/10 hover:text-white">
-                  <span>🚀</span>
+                <button className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-2 md:px-3 py-1.5 text-xs md:text-sm text-white/80 transition hover:border-secondary/50 hover:bg-secondary/10 hover:text-secondary">
+                  <span className="material-symbols-outlined text-base">
+                    rocket
+                  </span>
                   <span>Build a project</span>
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          <div className="flex w-full max-w-4xl flex-col gap-2 md:gap-3 mx-auto overflow-hidden">
+          <div className="flex w-full max-w-5xl flex-col space-y-4 md:space-y-6 mx-auto overflow-x-hidden px-3 md:px-6 pb-28">
             {messages.map((message, index) => (
               <MessageBubble
                 key={index}

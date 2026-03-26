@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter } from "react-router";
 import AppRoutes from "./AppRoutes";
 import { useAuth } from "../features/auth/hooks/useAuth";
@@ -7,10 +7,12 @@ import { useAuth } from "../features/auth/hooks/useAuth";
 function App() {
   const { handleRefresh, handleGetme } = useAuth();
   const [authLoading, setAuthLoading] = useState(true);
-  // const authState = useSelector((state) => state.auth);
-  // console.log(authState);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     (async () => {
       const refreshResult = await handleRefresh();
       if (refreshResult) {

@@ -40,15 +40,17 @@
 // };
 
 import { initializeSocketConnection } from "../service/chat.socket";
-import { sendMessage, getChats, getMessages } from "../service/chat.api";
+import { sendMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
 import {
   setChats,
   setCurrentChatId,
   setError,
   setLoading,
   createNewChat,
+  updateChat,
   addNewMessage,
   addMessages,
+  removeChat,
 } from "../chat.slice";
 import { useDispatch } from "react-redux";
 
@@ -57,41 +59,55 @@ export const useChat = () => {
 
   async function handleSendMessage({ message, chatId }) {
     try {
-      // Step 1: If new chat, create empty chat first
+      // Step 1: If new chat, create optimistic UI updates first
       let finalChatId = chatId;
       if (!chatId) {
-        // Create a temporary chat and get its ID from the response
-        const tempChatData = await sendMessage({ message, chatId: null });
-        finalChatId = tempChatData.chat._id;
+        // Generate a temporary chat ID for optimistic updates
+        const tempChatId = `temp-${Date.now()}`;
 
-        // Create the chat in Redux
+        // Create the chat in Redux immediately (optimistic)
         dispatch(
           createNewChat({
-            chatId: finalChatId,
-            title: tempChatData.chat.title,
+            chatId: tempChatId,
+            title: "New Chat", // Temporary title
           }),
         );
 
         // Add user message immediately (optimistic update)
         dispatch(
           addNewMessage({
-            chatId: finalChatId,
+            chatId: tempChatId,
             content: message,
             role: "user",
           }),
         );
 
-        // Add AI message immediately
+        // Set current chat immediately
+        dispatch(setCurrentChatId(tempChatId));
+
+        // Now send message to backend
+        dispatch(setLoading(true));
+        const response = await sendMessage({ message, chatId: null });
+
+        // Update with real chat ID and title
+        finalChatId = response.chat._id;
         dispatch(
-          addNewMessage({
-            chatId: finalChatId,
-            content: tempChatData.aiMessage.content,
-            role: tempChatData.aiMessage.role,
+          updateChat({
+            oldChatId: tempChatId,
+            newChatId: finalChatId,
+            title: response.chat.title,
           }),
         );
 
-        // Set current chat
-        dispatch(setCurrentChatId(finalChatId));
+        // Add AI message
+        dispatch(
+          addNewMessage({
+            chatId: finalChatId,
+            content: response.aiMessage.content,
+            role: response.aiMessage.role,
+          }),
+        );
+
         dispatch(setLoading(false));
         return;
       }
@@ -180,11 +196,24 @@ export const useChat = () => {
     dispatch(setCurrentChatId(null));
   }
 
+  async function handleDeleteChat(chatId) {
+    try {
+      dispatch(setLoading(true));
+      await deleteChat({ chatId });
+      dispatch(removeChat(chatId));
+    } catch (error) {
+      dispatch(setError(error.message || "Failed to delete chat"));
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+
   return {
     initializeSocketConnection,
     handleSendMessage,
     handleGetChats,
     handleOpenChat,
     handleNewChat,
+    handleDeleteChat,
   };
 };

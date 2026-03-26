@@ -16,7 +16,7 @@ function Login() {
   // redirect if already logged in
   useEffect(() => {
     if (!loading && user) {
-      navigate("/");
+      navigate("/dashboard");
     }
   }, [user, loading, navigate]);
 

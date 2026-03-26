@@ -5,6 +5,7 @@ import {
   login,
   getMe,
   handleRefresh as refreshApi,
+  logoutUser,
 } from "../services/auth.api";
 import {
   setUser,
@@ -70,7 +71,9 @@ export function useAuth() {
     try {
       dispatch(setLoading(true));
       const user = await getMe();
-      dispatch(setUser(user));
+      if(user) {
+        dispatch(setUser(user));
+      }
     } catch (error) {
       dispatch(
         setError(
@@ -82,5 +85,18 @@ export function useAuth() {
     }
   }, [dispatch]);
 
-  return { handleRegister, handleLogin, handleRefresh, handleGetme };
+  const handleLogout = useCallback(async () => {
+    try {
+      dispatch(setLoading(true));
+      await logoutUser();
+    } catch (error) {
+      console.error("Logout API failed:", error);
+    } finally {
+      dispatch(setUser(null));
+      dispatch(setAccessToken(null));
+      dispatch(setLoading(false));
+    }
+  }, [dispatch]);
+
+  return { handleRegister, handleLogin, handleRefresh, handleGetme, handleLogout };
 }

@@ -39,3 +39,8 @@ export async function getMe() {
   const response = await api.get("/get-me");
   return response.data;
 }
+
+export async function logoutUser() {
+  const response = await api.get("/logout");
+  return response.data;
+}

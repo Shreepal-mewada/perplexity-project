@@ -4,13 +4,16 @@ import Login from "../features/auth/pages/Login";
 import Register from "../features/auth/pages/Register";
 import Dashboard from "../features/chat/pages/Dashboard";
 import Protected from "../features/auth/components/Protected";
+import PublicRoute from "../features/auth/components/PublicRoute";
+import Landing from "../features/landing/pages/Landing";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Protected><Dashboard /></Protected>} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
     </Routes>
   );
 }
