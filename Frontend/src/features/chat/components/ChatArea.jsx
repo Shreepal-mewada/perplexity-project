@@ -21,7 +21,7 @@ const ChatArea = ({
   //
 
   return (
-    <div className="flex flex-col h-full w-full min-h-0 bg-[#212121] overflow-hidden text-sm">
+    <div className="flex flex-col h-full w-full min-h-0 bg-background overflow-hidden text-sm">
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden w-full px-4 md:px-4 py-3 md:py-4 min-h-0 scrollbar-styled">
         {isEmpty ? (
@@ -32,27 +32,27 @@ const ChatArea = ({
                   sparkles
                 </span>
               </div>
-              <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-white/80 font-headline">
+              <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground font-display">
                 Ask anything...
               </h2>
-              <p className="mx-auto mt-2 max-w-xl text-xs md:text-sm leading-5 md:leading-6 text-white/80">
+              <p className="mx-auto mt-2 max-w-xl text-xs md:text-sm leading-5 md:leading-6 text-muted-foreground">
                 Get instant answers, create content, and explore ideas with
                 Zyricon AI
               </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
-                <button className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-2 md:px-3 py-1.5 text-xs md:text-sm text-white/80 transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">
+                <button className="inline-flex items-center gap-1.5 rounded-full glass px-2 md:px-3 py-1.5 text-xs md:text-sm text-foreground transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">
                   <span className="material-symbols-outlined text-base">
                     lightbulb
                   </span>
                   <span>Explain React</span>
                 </button>
-                <button className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-2 md:px-3 py-1.5 text-xs md:text-sm text-white/80 transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">
+                <button className="inline-flex items-center gap-1.5 rounded-full glass px-2 md:px-3 py-1.5 text-xs md:text-sm text-foreground transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">
                   <span className="material-symbols-outlined text-base">
                     build
                   </span>
                   <span>Fix my code</span>
                 </button>
-                <button className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-2 md:px-3 py-1.5 text-xs md:text-sm text-white/80 transition hover:border-secondary/50 hover:bg-secondary/10 hover:text-secondary">
+                <button className="inline-flex items-center gap-1.5 rounded-full glass px-2 md:px-3 py-1.5 text-xs md:text-sm text-foreground transition hover:border-secondary/50 hover:bg-secondary/10 hover:text-secondary">
                   <span className="material-symbols-outlined text-base">
                     rocket
                   </span>
@@ -62,12 +62,13 @@ const ChatArea = ({
             </div>
           </div>
         ) : (
-          <div className="flex w-full max-w-5xl flex-col space-y-4 md:space-y-6 mx-auto overflow-x-hidden px-3 md:px-6 pb-28">
+          <div className="flex w-[100%] max-w-[1200px] flex-col space-y-4 md:space-y-6 mx-auto overflow-x-hidden px-2 md:px-6 pb-28">
             {messages.map((message, index) => (
               <MessageBubble
                 key={index}
                 message={message.content || message.text}
                 sender={message.role === "user" ? "user" : "ai"}
+                isNewReply={message.isNewReply}
               />
             ))}
             {loading && (

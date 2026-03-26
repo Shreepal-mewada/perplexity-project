@@ -27,7 +27,25 @@ const getMistralModel = () => {
   return mistralModel;
 };
 
-export async function generateResponse(message) {
+export function buildLLMContext(memoryContext) {
+  let contextParts = [];
+
+  if (memoryContext && memoryContext.topMemories && memoryContext.topMemories.length > 0) {
+    const facts = memoryContext.topMemories.map(m => `- [${m.projectKey}] ${m.content}`).join("\n");
+    contextParts.push(`[LONG-TERM USER FACTS]\nThese are durable facts about the user's preferences, projects, and stack:\n${facts}`);
+  }
+
+  if (memoryContext && memoryContext.shortTermMemory) {
+    const sm = memoryContext.shortTermMemory;
+    const topics = sm.activeTopics?.join(", ");
+    const uq = sm.unresolvedQuestions?.join(", ");
+    contextParts.push(`[CURRENT SHORT-TERM CHAT CONTEXT]\nActive Topics: ${topics || 'none'}\nUnresolved Questions: ${uq || 'none'}\nRecent Conversation Summary: ${sm.recentSummary || 'This is the start of the conversation.'}`);
+  }
+
+  return contextParts.join("\n\n");
+}
+
+export async function generateResponse(message, memoryContext = null) {
   try {
     // Convert Mongoose documents to plain objects if needed
     const messagesArray = Array.isArray(message) ? message : [message];
@@ -48,9 +66,13 @@ export async function generateResponse(message) {
       })
       .filter(Boolean);
 
+    const contextBlock = memoryContext ? buildLLMContext(memoryContext) : "";
+
     // Create a system prompt
     const systemPrompt = new SystemMessage(
       `You are a helpful AI assistant with excellent formatting skills.
+
+${contextBlock ? `\n=========================================\nMEMORY CONTEXT AVAILABLE:\n${contextBlock}\n=========================================\n` : ''}
 
 IMPORTANT TABLE FORMATTING RULES:
 - When presenting data, comparisons, schedules, lists of items, or any structured information, ALWAYS use markdown tables

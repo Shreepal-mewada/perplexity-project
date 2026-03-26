@@ -2,12 +2,12 @@ import { useChat } from "../hooks/useChat";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentChatId } from "../chat.slice";
-// import PremiumSidebar from "../components/PremiumSidebar";
-// import PremiumTopHeader from "../components/PremiumTopHeader";
-// import PremiumWorkspace from "../components/PremiumWorkspace";
+import PremiumSidebar from "../components/PremiumSidebar";
+import PremiumTopHeader from "../components/PremiumTopHeader";
+import PremiumWorkspace from "../components/PremiumWorkspace";
 import ChatArea from "../components/ChatArea";
 import InputBar from "../components/InputBar";
-// import RightPanel from "../components/RightPanel";
+import RightPanel from "../components/RightPanel";
 import CollapsedRightPanel from "../components/CollapsedRightPanel";
 import Sidebar from "../components/Sidebar";
 
@@ -138,7 +138,7 @@ function Dashboard() {
     !showChatInterface
   ) {
     return (
-      <div className="h-[100dvh] w-full bg-[#212121] text-white/80 font-body selection:bg-primary/30 overflow-hidden">
+      <div className="h-[100dvh] w-full bg-background text-foreground font-body selection:bg-primary/30 overflow-hidden">
         {/* Mobile: Show hamburger menu, Desktop: Show Premium Sidebar */}
 
         {/* Desktop Sidebar */}
@@ -189,7 +189,7 @@ function Dashboard() {
 
         {/* Main Content - Responsive layout */}
         <main
-          className="h-[100dvh] w-full relative flex flex-col bg-[#212121] transition-all duration-300 md:ml-60 md:w-[calc(100%-15rem)] overflow-hidden"
+          className="h-[100dvh] w-full relative flex flex-col bg-background transition-all duration-300 md:ml-60 md:w-[calc(100%-15rem)] overflow-hidden"
           id="main-content"
         >
           <PremiumWorkspace onSendMessage={handleSendMessage} />
@@ -207,12 +207,12 @@ function Dashboard() {
   // Show loading screen while initializing
   if (!hasInitialized) {
     return (
-      <div className="h-[100dvh] w-full overflow-hidden bg-[#212121] flex items-center justify-center px-4">
+      <div className="h-[100dvh] w-full overflow-hidden bg-background flex items-center justify-center px-4">
         <div className="text-center">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-secondary/20 animate-spin">
             <div className="h-12 w-12 rounded-full border-2 border-primary/30 border-t-primary"></div>
           </div>
-          <p className="text-white/80">Loading chats...</p>
+          <p className="text-muted-foreground">Loading chats...</p>
         </div>
       </div>
     );
@@ -220,7 +220,7 @@ function Dashboard() {
 
   // Show Chat Interface after message is sent or chat is selected
   return (
-    <div className="h-[100dvh] w-full bg-[#212121] flex flex-col md:flex-row overflow-hidden relative">
+    <div className="h-[100dvh] w-full bg-background flex flex-col md:flex-row overflow-hidden relative">
       {/* Sidebar - Show collapsed button on desktop if hidden, else show full sidebar */}
       <div className="transition-all duration-300 md:flex-shrink-0">
         <Sidebar
@@ -241,18 +241,18 @@ function Dashboard() {
       {/* Main Chat Area */}
       <div className="flex flex-col flex-1 min-h-0 w-full transition-all duration-300">
         {/* Top Header for Chat Interface */}
-        <header className="h-14 md:h-11 flex items-center px-4 md:px-4 z-40 bg-[#212121] backdrop-blur-xl shrink-0 gap-3 md:gap-0">
+        <header className="h-14 md:h-11 flex items-center px-4 md:px-4 z-40 bg-background/80 backdrop-blur-xl shrink-0 gap-3 md:gap-0">
           {/* Mobile Menu Button */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden flex items-center justify-center p-2 -ml-2 hover:bg-white/5 rounded-lg transition text-white/80"
+            className="md:hidden flex items-center justify-center p-2 -ml-2 hover:bg-surface rounded-lg transition text-foreground"
             title="Open sidebar"
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
 
           {/* Chat Title Container - Zyricon AI Always Visible */}
-          <h2 className="text-base md:text-sm font-bold text-white/80 truncate">
+          <h2 className="text-base md:text-sm font-bold text-foreground truncate">
             Zyricon AI
           </h2>
         </header>

@@ -1,6 +1,8 @@
 import { generateResponse, generateChatTitle } from "../services/ai.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
+import chatMemoryModel from "../models/chatMemory.model.js";
+import { getRelevantMemories, processNewMessages } from "../services/memory.service.js";
 
 export async function sendMessage(req, res) {
   try {
@@ -24,16 +26,40 @@ export async function sendMessage(req, res) {
       role: "user",
     });
 
-    const messages = await messageModel.find({ chat: chatId || chat._id });
+    const activeChatId = chatId || chat._id;
 
-    const result = await generateResponse(messages);
+    // Fetch memory context
+    let chatMemory = await chatMemoryModel.findOne({ chat: activeChatId });
+    if (!chatMemory) {
+       chatMemory = await chatMemoryModel.create({ chat: activeChatId, user: userId });
+    }
+    
+    // Fetch relevant long term facts
+    const activeTopics = chatMemory.activeTopics || [];
+    const topMemories = await getRelevantMemories(userId, message, activeTopics);
+
+    const memoryContext = {
+      shortTermMemory: chatMemory,
+      topMemories: topMemories
+    };
+
+    // Fetch only the last 15 raw messages to maintain immediate flow
+    const recentMessages = await messageModel.find({ chat: activeChatId })
+      .sort({ createdAt: -1 })
+      .limit(15);
+    recentMessages.reverse();
+
+    // Generate output injected with context
+    const result = await generateResponse(recentMessages, memoryContext);
 
     const aiMessage = await messageModel.create({
-      chat: chatId || chat._id,
+      chat: activeChatId,
       content: result,
       role: "ai",
     });
 
+    // Asynchronously trigger the memory extraction pipeline
+    processNewMessages(activeChatId, userId).catch(err => console.error("Memory Pipeline Error:", err));
     res.status(201).json({
       title,
       chat,

@@ -39,35 +39,35 @@ const PremiumWorkspace = ({ onSendMessage }) => {
         </div>
 
         {/* Main Heading */}
-        <h2 className="text-2xl md:text-3xl lg:text-5xl font-extrabold font-headline tracking-tight text-white mb-3 px-4 md:px-0">
+        <h2 className="text-2xl md:text-3xl lg:text-5xl font-extrabold font-display tracking-tight text-foreground mb-3 px-4 md:px-0">
           Ready to Create{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
+          <span className="text-gradient">
             Something New?
           </span>
         </h2>
 
         {/* Subtitle */}
-        <p className="text-white/80 text-sm md:text-base max-w-lg mb-10 font-body leading-relaxed px-4 md:px-0">
+        <p className="text-muted-foreground text-sm md:text-base max-w-lg mb-10 font-body leading-relaxed px-4 md:px-0">
           Experience the next generation of creative intelligence. From
           high-fidelity visual generation to complex strategic planning.
         </p>
 
         {/* Quick Suggestions */}
         <div className="flex flex-wrap justify-center gap-3 mb-10">
-          <button className="px-5 py-2.5 rounded-full bg-white/3 backdrop-blur-[24px] border border-white/8 text-sm font-medium hover:border-primary/50 transition-all flex items-center gap-2 text-white">
+          <button className="px-5 py-2.5 rounded-full glass border border-transparent text-sm font-medium hover:border-primary/50 transition-all flex items-center gap-2 text-foreground">
             <span className="material-symbols-outlined text-primary text-lg">
               image
             </span>
             Create Image
           </button>
-          <button className="px-5 py-2.5 rounded-full bg-white/3 backdrop-blur-[24px] border border-white/8 text-sm font-medium hover:border-secondary/50 transition-all flex items-center gap-2 text-white">
+          <button className="px-5 py-2.5 rounded-full glass border border-transparent text-sm font-medium hover:border-secondary/50 transition-all flex items-center gap-2 text-foreground">
             <span className="material-symbols-outlined text-secondary text-lg">
               lightbulb
             </span>
             Brainstorm
           </button>
-          <button className="px-5 py-2.5 rounded-full bg-white/3 backdrop-blur-[24px] border border-white/8 text-sm font-medium hover:border-white/40 transition-all flex items-center gap-2 text-white">
-            <span className="material-symbols-outlined text-white/80 text-lg">
+          <button className="px-5 py-2.5 rounded-full glass border border-transparent text-sm font-medium hover:border-white/40 transition-all flex items-center gap-2 text-foreground">
+            <span className="material-symbols-outlined text-muted-foreground text-lg">
               edit_note
             </span>
             Make a plan
@@ -76,9 +76,9 @@ const PremiumWorkspace = ({ onSendMessage }) => {
 
         {/* Main Input Bar */}
         <div className="w-full max-w-3xl relative px-4 md:px-0">
-          <div className="bg-white/3 backdrop-blur-[24px] border border-white/8 rounded-full p-2 md:pl-6 flex items-center gap-2 md:gap-3 shadow-2xl shadow-black/60 ring-1 ring-white/10">
+          <div className="glass rounded-full p-2 md:pl-6 flex items-center gap-2 md:gap-3 premium-shadow ring-1 ring-glass-border">
             <input
-              className="bg-transparent border-none focus:ring-0 flex-1 text-white/80 text-base placeholder:text-white/80 font-medium"
+              className="bg-transparent border-none focus:ring-0 flex-1 text-foreground text-base placeholder:text-muted-foreground font-medium"
               placeholder="Ask Anything..."
               type="text"
               value={input}
@@ -87,13 +87,13 @@ const PremiumWorkspace = ({ onSendMessage }) => {
             />
             <div className="flex items-center gap-1 pr-2">
               <button
-                className="p-2 text-white/80 hover:text-white/80 transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                 title="Attach"
               >
                 <span className="material-symbols-outlined">attach_file</span>
               </button>
               <button
-                className="p-2 text-white/80 hover:text-white/80 transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                 title="Settings"
               >
                 <span className="material-symbols-outlined">
@@ -101,20 +101,20 @@ const PremiumWorkspace = ({ onSendMessage }) => {
                 </span>
               </button>
               <button
-                className="p-2 text-white/80 hover:text-white/80 transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                 title="Options"
               >
                 <span className="material-symbols-outlined">more_vert</span>
               </button>
-              <div className="h-6 w-[1px] bg-white/10 mx-2"></div>
+              <div className="h-6 w-[1px] bg-border mx-2"></div>
               <button
-                className="p-2 text-white/80 hover:text-primary transition-colors"
+                className="p-2 text-muted-foreground hover:text-primary transition-colors"
                 title="Voice"
               >
                 <span className="material-symbols-outlined">mic</span>
               </button>
               <button
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-black shadow-lg shadow-primary/20 hover:scale-105 transition-transform active:scale-95"
+                className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20 hover:scale-105 transition-transform active:scale-95 glow-blue-sm"
                 onClick={handleSend}
               >
                 <span className="material-symbols-outlined font-bold">
@@ -126,12 +126,12 @@ const PremiumWorkspace = ({ onSendMessage }) => {
 
           {/* Status Indicators */}
           <div className="mt-4 flex justify-center gap-8">
-            <span className="text-[10px] text-white/80 uppercase tracking-widest font-bold flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
               Encrypted Session
             </span>
-            <span className="text-[10px] text-white/80 uppercase tracking-widest font-bold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow"></span>
               Ultra-Fast Latency
             </span>
           </div>

@@ -105,6 +105,7 @@ export const useChat = () => {
             chatId: finalChatId,
             content: response.aiMessage.content,
             role: response.aiMessage.role,
+            isNewReply: true,
           }),
         );
 
@@ -134,6 +135,7 @@ export const useChat = () => {
           chatId: finalChatId,
           content: aiMessage.content,
           role: aiMessage.role,
+          isNewReply: true,
         }),
       );
     } catch (error) {
