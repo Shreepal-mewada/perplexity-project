@@ -89,7 +89,7 @@ const Sidebar = ({
         <div className="flex bg-surface rounded-full flex-col items-center gap-1 mb-1  hover:rounded-full">
           <button
             onClick={handleLogout}
-            className="p-2 hover:bg-red-500/20 rounded-full transition text-red-500/80 relative group flex items-center justify-center -mb-1 mt-1 shrink-0"
+            className=" p-3 hover:bg-red-500/20 rounded-full transition text-red-500/80 relative group flex items-center justify-center -mb-1 mt-1 shrink-0"
           >
             <span className="material-symbols-outlined text-[16px]">
               logout
@@ -103,7 +103,7 @@ const Sidebar = ({
             onClick={onToggleSidebarDesktop}
             className="p-1 hover:bg-surface  hover:rounded-full transition text-secondary relative group"
           >
-            <div className="flex h-8 w-8 items-center  hover:rounded-full justify-center rounded-full bg-secondary/20 text-secondary font-bold text-xs text-amber-50">
+            <div className="flex h-8 w-8 items-center  hover:rounded-full justify-center rounded-full bg-white text-secondary font-bold text-xs text-amber-50">
               {initial}
             </div>
             <div className=" hover:rounded-full absolute left-full ml-2 px-1.5 py-0.5 bg-surface border border-border text-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
@@ -276,7 +276,7 @@ const Sidebar = ({
           <div className="border-t border-border p-2 shrink-0 mt-auto">
             <div className="flex items-center justify-between rounded-xl glass p-2 hover:border-glass-border/80 transition group premium-shadow">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary font-bold text-xs">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-secondary font-bold text-xs">
                   {initial}
                 </div>
                 <div className="min-w-0 pr-2">
