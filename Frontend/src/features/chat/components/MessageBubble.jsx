@@ -19,10 +19,10 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
 
     setIsTyping(true);
     let currentIndex = 0;
-    const totalDurationMs = Math.min(message.length * 15, 2500); 
+    const totalDurationMs = Math.min(message.length * 15, 2500);
     const tickRateMs = 30; // ~33 fps
     const charsPerTick = Math.max(1, Math.floor(message.length / (totalDurationMs / tickRateMs)));
-    
+
     const intervalId = setInterval(() => {
       currentIndex += charsPerTick;
       if (currentIndex >= message.length) {
@@ -55,8 +55,8 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
         {/* Avatar */}
         <div
           className={`mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold ${sender === "user"
-              ? "bg-primary/20 text-primary"
-              : "bg-secondary/20 text-secondary"
+            ? "bg-primary/20 text-primary"
+            : "bg-secondary/20 text-secondary"
             }`}
         >
           {sender === "user" ? (
@@ -75,8 +75,8 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
         {/* Message Bubble */}
         <div
           className={`glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 text-[15px] md:text-base flex flex-col ${sender === "user"
-              ? "bg-primary/20 text-foreground items-end rounded-tr-sm"
-              : "text-foreground items-start overflow-x-auto rounded-tl-sm premium-shadow"
+            ? "bg-primary/20 text-foreground items-end rounded-tr-sm"
+            : "text-foreground items-start overflow-x-auto rounded-tl-sm premium-shadow"
             }`}
         >
           <p className={`mb-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 ${sender === "user" ? "text-right" : "text-left"}`}>
@@ -98,7 +98,7 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
           ) : sender === "user" ? (
             <p className="leading-relaxed md:leading-7 break-words whitespace-pre-wrap">{displayedText}</p>
           ) : (
-            <div 
+            <div
               className="markdown-content leading-relaxed md:leading-7 max-w-full break-words relative overflow-x-hidden"
               onClick={handleSkipTyping}
               title={isTyping ? "Click to skip animation" : ""}

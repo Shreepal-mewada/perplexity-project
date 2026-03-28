@@ -4,11 +4,18 @@ import cookieParser from "cookie-parser";
 import connectToDatabase from "./config/database.js";
 import authRoutes from "./routes/auth.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import fileRoutes from "./routes/file.routes.js";
+import { initializePinecone } from "./services/pinecone.service.js";
 import cors from "cors";
 import morgan from "morgan";
 
 dotenv.config();
 connectToDatabase();
+
+// Initialize Pinecone index on startup (non-blocking)
+initializePinecone().catch((err) =>
+  console.warn("Pinecone startup init failed:", err.message)
+);
 
 const app = express();
 app.use(morgan("dev"));
@@ -25,5 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/files", fileRoutes);
 
 export default app;
+

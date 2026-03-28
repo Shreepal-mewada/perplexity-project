@@ -1,0 +1,236 @@
+# RAG File-Upload — Final Architecture Decisions
+
+All decisions below are **finalized and ready to implement**. Please review and approve.
+
+---
+
+## 1. Pinecone Index Configuration
+
+| Setting | Decision |
+|---|---|
+| Index Name | `rag-documents` |
+| Embedding Dimension | **1024** (Mistral `mistral-embed` output dim) |
+| Metric | **Cosine** |
+| Namespace Rule | `user-{userId}` — one namespace per user |
+| Pinecone Tier | Serverless (no environment string needed for new Pinecone SDK) |
+| Auto-create index | Yes — on server startup if index does not exist |
+
+**Why `user-{userId}` namespace:**
+- Namespaces are free in Pinecone Serverless
+- All vectors for a user live in one namespace; `fileId` in metadata filters them per-file
+- Clean access control — a user cannot accidentally query another user's namespace
+- Future multi-file: same namespace, different `fileId` filter
+
+```env
+# Add to .env
+PINECONE_INDEX=rag-documents
+```
+
+---
+
+## 2. Chat / File Relationship
+
+| Question | Decision |
+|---|---|
+| Files per chat | **One active file per chat session** |
+| File-chat link | `fileId` stored on the **Chat MongoDB document** (new field) |
+| Multiple files later | Supported by design — `Chat.fileId` can evolve to `Chat.fileIds[]` |
+| File upload scope | File is uploaded **globally to Pinecone** under the user's namespace, then linked to a specific chat via `fileId` |
+
+**Why file linked to chat:**
+- User opens Chat A with `contract.pdf` active → asks questions → AI uses that file
+- User opens Chat B → no file linked → pure LLM chat
+- Switching chats switches file context automatically (no stale file bleeds across chats)
+
+---
+
+## 3. Active File Context — Refresh Restoration
+
+| Scenario | Behavior |
+|---|---|
+| Page refresh | File context is **restored from the backend** — the `Chat` document stores `fileId + fileName` |
+| Opening a chat | `getMessages` API response will include `fileContext: { fileId, fileName, status }` |
+| Logout | Frontend file state clears; **Pinecone vectors persist** (user owns them) |
+| Login again | File context restores correctly when user reopens the linked chat |
+
+**Implementation:**
+- `Chat` model gains `fileId` (String) and `fileName` (String) optional fields
+- `getMessages` endpoint returns these fields in response
+- Frontend reads them and re-hydrates Redux `fileContext` state on chat open
+
+---
+
+## 4. Retrieval Defaults
+
+| Parameter | Value | Reasoning |
+|---|---|---|
+| Chunk size | **1000 characters** | ~250 tokens — fits comfortably in context without truncation |
+| Chunk overlap | **150 characters** | Prevents sentence splitting on boundaries |
+| Top-K retrieval | **5 chunks** | Enough context without bloating the LLM prompt |
+| Minimum similarity score | **0.72** | Below this = chunk is not relevant enough; discard |
+| Max context chars fed to LLM | **4000 chars** (5 chunks × 800 avg) | Safe within Gemini context window |
+
+**Fallback rule:** If 0 chunks meet the 0.72 threshold → respond with a specific message (see Section 8).
+
+---
+
+## 5. File Metadata — MongoDB Storage
+
+A new `FileUpload` Mongoose model will be created:
+
+```js
+{
+  fileId: String,         // uuid v4, unique
+  userId: ObjectId,       // ref: User
+  chatId: ObjectId,       // ref: Chat (which chat this is linked to)
+  fileName: String,       // original file name e.g. "contract.pdf"
+  fileSize: Number,       // bytes
+  pageCount: Number,      // extracted from pdf-parse
+  chunkCount: Number,     // total chunks stored in Pinecone
+  namespace: String,      // "user-{userId}"
+  status: String,         // 'uploading' | 'parsing' | 'embedding' | 'indexing' | 'ready' | 'failed'
+  errorMessage: String,   // populated on 'failed'
+  uploadedAt: Date,
+  updatedAt: Date
+}
+```
+
+This gives you a full audit trail and enables a status polling endpoint (`GET /api/files/:fileId/status`).
+
+---
+
+## 6. File Lifecycle Rules
+
+| Scenario | Behavior |
+|---|---|
+| Delete chat | Pinecone vectors for linked file are **also deleted** automatically |
+| User clicks "Remove file" | Pinecone vectors deleted + `FileUpload` doc deleted + `Chat.fileId` cleared |
+| Re-upload same file | New `fileId` is generated; old vectors remain until explicitly deleted |
+| Logout | Pinecone vectors **persist** (user's data is preserved across sessions) |
+| User deletion | Future: cascade delete all user namespaces |
+
+---
+
+## 7. Indexing States — Full State Machine
+
+```
+[uploading]  →  File received by backend via multer
+[parsing]    →  pdf-parse extracting text
+[embedding]  →  Mistral generating vectors for all chunks
+[indexing]   →  Pinecone upsert in progress
+[ready]      →  All done, file available for RAG queries
+[failed]     →  Any step above failed; errorMessage populated
+```
+
+**Frontend shows:**
+- `uploading` → spinner + "Uploading file..."
+- `parsing` → spinner + "Reading document..."
+- `embedding` → spinner + "Analyzing content..."
+- `indexing` → spinner + "Indexing document..."
+- `ready` → green badge + "📄 filename.pdf · Ready"
+- `failed` → red badge + error message + retry option
+
+**State delivery:** Backend processes synchronously in one request (no polling for now). Final state (`ready` or `failed`) returned in the upload API response. Status endpoint available for future async upgrade.
+
+---
+
+## 8. Fallback Behavior — No Relevant Chunks
+
+When `fileId` is present but no chunks score above **0.72**, the response will be:
+
+> *"I couldn't find relevant information about that in the uploaded document **[filename]**. The document may not contain details on this topic, or try rephrasing your question."*
+
+When classifier routes to `GENERAL` (unrelated question despite active file):
+
+> Normal LLM response — no mention of the file, no Pinecone query.
+
+---
+
+## 9. Multi-File Future Design
+
+The current architecture is **designed to support multiple files** with zero refactor:
+
+- `Chat.fileId` → can become `Chat.fileIds: [String]`  
+- Pinecone query filter → `{ userId, fileId: { $in: [id1, id2] } }`
+- Classifier → returns which file(s) the question is about
+- Only the retrieval filter needs updating — all services stay the same
+
+---
+
+## 10. Access Control
+
+| Layer | Rule |
+|---|---|
+| Pinecone namespace | `user-{userId}` — users only query their own namespace |
+| Metadata filter | Every query additionally filters `{ fileId: X, userId: Y }` as double-check |
+| Upload endpoint | `authenticate` middleware required — `userId` comes from `req.user.id` |
+| Delete endpoint | Validates that `FileUpload.userId === req.user.id` before deleting |
+| Status endpoint | Validates ownership before returning file status |
+
+---
+
+## 11. Corrupt / Empty PDF Handling
+
+| Case | Response |
+|---|---|
+| File not PDF (wrong MIME) | `400 Bad Request` — "Only PDF files are accepted" |
+| File >10MB | `400 Bad Request` — "File size must be under 10MB" |
+| PDF parses but text is empty | `422 Unprocessable Entity` — "This PDF appears to be empty or image-only (scanned). Text extraction is not supported for image PDFs." |
+| PDF is corrupt / unreadable | `422 Unprocessable Entity` — "The uploaded PDF could not be read. Please ensure it is a valid, uncorrupted PDF file." |
+| Embedding API failure | `502 Bad Gateway` — "Failed to generate embeddings. Please try again." + `FileUpload.status = 'failed'` |
+| Pinecone upsert failure | `502 Bad Gateway` — "Failed to store document index. Please try again." + cleanup attempted |
+
+**Cleanup flow on failure:** If any step fails, `FileUpload` doc is updated to `status: 'failed'` with `errorMessage`. No orphaned vectors remain since upsert only happens after all embeddings succeed.
+
+---
+
+## New Files Summary
+
+### Backend
+| File | Purpose |
+|---|---|
+| `routes/file.routes.js` | Upload, status, delete endpoints |
+| `controllers/file.controller.js` | Request handling + orchestration |
+| `middleware/upload.middleware.js` | Multer config (PDF, 10MB, memory) |
+| `services/pdf.service.js` | PDF text extraction |
+| `services/chunker.service.js` | Text chunking with overlap |
+| `services/embedding.service.js` | Mistral batch embeddings |
+| `services/pinecone.service.js` | Upsert, query, delete |
+| `services/classifier.service.js` | Query intent routing |
+| `services/rag.service.js` | Full RAG pipeline orchestration |
+| `models/fileUpload.model.js` | MongoDB file metadata model |
+
+### Modified Backend
+| File | Change |
+|---|---|
+| `src/app.js` | Register `/api/files` route |
+| `models/chat.model.js` | Add `fileId`, `fileName` optional fields |
+| `controllers/chat.controller.js` | Accept `fileId`, route to RAG or normal |
+| `services/ai.service.js` | Add `generateRagResponse()` |
+
+### Frontend
+| File | Purpose |
+|---|---|
+| `components/FileUploadBadge.jsx` | Active file badge with state + clear |
+| `service/file.api.js` | Upload API call with FormData |
+
+### Modified Frontend
+| File | Change |
+|---|---|
+| `components/InputBar.jsx` | Wire attach button, show badge |
+| `hooks/useChat.js` | `handleUploadFile`, `clearFileContext` |
+| `service/chat.api.js` | Pass `fileId` in message payload |
+| `pages/Dashboard.jsx` | Manage `fileContext` state, pass down |
+| `chat.slice.js` | Add `fileContext` to Redux state |
+
+---
+
+## Install Commands (3 packages)
+```bash
+cd Backend && npm install multer pdf-parse uuid
+```
+
+---
+
+> [!IMPORTANT]
+> All decisions above are final. **Please confirm approval** — once confirmed I will immediately begin implementing all files in order from backend to frontend, with no breaking changes to existing functionality.

@@ -56,11 +56,10 @@ const PricingSection = () => (
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.1 }}
-            className={`rounded-2xl p-8 flex flex-col transition-all duration-300 hover:scale-[1.02] ${
-              p.highlight
+            className={`rounded-2xl p-8 flex flex-col transition-all duration-300 hover:scale-[1.02] ${p.highlight
                 ? "glass border-primary/40 glow-blue-sm relative"
                 : "glass"
-            }`}
+              }`}
           >
             {p.highlight && (
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-medium bg-primary text-primary-foreground rounded-full">
@@ -85,11 +84,10 @@ const PricingSection = () => (
             </ul>
             <Link
               to="/register"
-              className={`w-full py-3 rounded-full text-sm font-medium text-center flex items-center justify-center gap-2 transition-all ${
-                p.highlight
+              className={`w-full py-3 rounded-full text-sm font-medium text-center flex items-center justify-center gap-2 transition-all ${p.highlight
                   ? "bg-primary text-primary-foreground hover:opacity-90"
                   : "border border-border text-foreground hover:bg-surface"
-              }`}
+                }`}
             >
               {p.cta}
               <ArrowRight className="w-4 h-4" />

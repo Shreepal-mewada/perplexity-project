@@ -1,46 +1,6 @@
-// import { initializeSocketConnection } from "../service/chat.socket";
-// import {
-//   sendMessage,
-//   getChats,
-//   getMessages,
-//   deleteChat,
-// } from "../service/chat.api";
-// import { useDispatch } from "react-redux";
-// import {
-//   setChats,
-//   setCurrentChatId,
-//   setError,
-//   setLoading,
-//   createNewChat,
-//   addNewMessage,
-//   addMessages,
-// } from "../chat.slice";
-
-// export const useChat = () => {
-//   const dispatch = useDispatch();
-
-//   const handleSendMessage = async ({ message, chatId }) => {
-//     try {
-//       dispatch(setLoading(true));
-//       const response = await sendMessage({ message, chatId });
-
-//       dispatch(setLoading(false));
-//       return response;
-//     } catch (error) {
-//       dispatch(setError(error.message || "Failed to send message"));
-//     } finally {
-//       dispatch(setLoading(false));
-//     }
-//   };
-
-//   return {
-//     initializeSocketConnection,
-//     handleSendMessage,
-//   };
-// };
-
 import { initializeSocketConnection } from "../service/chat.socket";
 import { sendMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
+import { uploadFile, removeFile } from "../service/file.api";
 import {
   setChats,
   setCurrentChatId,
@@ -51,93 +11,48 @@ import {
   addNewMessage,
   addMessages,
   removeChat,
+  setFileContext,
+  clearFileContext,
 } from "../chat.slice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 export const useChat = () => {
   const dispatch = useDispatch();
+  const { fileContext } = useSelector((state) => state.chat);
 
   async function handleSendMessage({ message, chatId }) {
     try {
-      // Step 1: If new chat, create optimistic UI updates first
       let finalChatId = chatId;
       if (!chatId) {
-        // Generate a temporary chat ID for optimistic updates
         const tempChatId = `temp-${Date.now()}`;
-
-        // Create the chat in Redux immediately (optimistic)
-        dispatch(
-          createNewChat({
-            chatId: tempChatId,
-            title: "New Chat", // Temporary title
-          }),
-        );
-
-        // Add user message immediately (optimistic update)
-        dispatch(
-          addNewMessage({
-            chatId: tempChatId,
-            content: message,
-            role: "user",
-          }),
-        );
-
-        // Set current chat immediately
+        dispatch(createNewChat({ chatId: tempChatId, title: "New Chat" }));
+        dispatch(addNewMessage({ chatId: tempChatId, content: message, role: "user" }));
         dispatch(setCurrentChatId(tempChatId));
-
-        // Now send message to backend
         dispatch(setLoading(true));
-        const response = await sendMessage({ message, chatId: null });
 
-        // Update with real chat ID and title
+        const response = await sendMessage({
+          message,
+          chatId: null,
+          fileId: fileContext?.fileId || null,
+        });
+
         finalChatId = response.chat._id;
-        dispatch(
-          updateChat({
-            oldChatId: tempChatId,
-            newChatId: finalChatId,
-            title: response.chat.title,
-          }),
-        );
-
-        // Add AI message
-        dispatch(
-          addNewMessage({
-            chatId: finalChatId,
-            content: response.aiMessage.content,
-            role: response.aiMessage.role,
-            isNewReply: true,
-          }),
-        );
-
+        dispatch(updateChat({ oldChatId: tempChatId, newChatId: finalChatId, title: response.chat.title }));
+        dispatch(addNewMessage({ chatId: finalChatId, content: response.aiMessage.content, role: response.aiMessage.role, isNewReply: true }));
         dispatch(setLoading(false));
         return;
       }
 
-      // Step 2: For existing chat - optimistic update
       dispatch(setLoading(true));
+      dispatch(addNewMessage({ chatId: finalChatId, content: message, role: "user" }));
 
-      // Add user message immediately (optimistic update) - appears right away
-      dispatch(
-        addNewMessage({
-          chatId: finalChatId,
-          content: message,
-          role: "user",
-        }),
-      );
+      const data = await sendMessage({
+        message,
+        chatId: finalChatId,
+        fileId: fileContext?.fileId || null,
+      });
 
-      // Step 3: Send message to backend
-      const data = await sendMessage({ message, chatId: finalChatId });
-      const { aiMessage } = data;
-
-      // Step 4: Add AI response when it arrives
-      dispatch(
-        addNewMessage({
-          chatId: finalChatId,
-          content: aiMessage.content,
-          role: aiMessage.role,
-          isNewReply: true,
-        }),
-      );
+      dispatch(addNewMessage({ chatId: finalChatId, content: data.aiMessage.content, role: data.aiMessage.role, isNewReply: true }));
     } catch (error) {
       dispatch(setError(error.message || "Failed to send message"));
     } finally {
@@ -160,8 +75,8 @@ export const useChat = () => {
               lastUpdated: chat.updatedAt,
             };
             return acc;
-          }, {}),
-        ),
+          }, {})
+        )
       );
     } catch (error) {
       dispatch(setError(error.message || "Failed to load chats"));
@@ -174,19 +89,17 @@ export const useChat = () => {
     try {
       dispatch(setLoading(true));
       const data = await getMessages(chatId);
-      const { messages } = data;
+      const { messages, fileContext: restoredFileContext } = data;
 
-      const formattedMessages = messages.map((msg) => ({
-        content: msg.content,
-        role: msg.role,
-      }));
-      dispatch(
-        addMessages({
-          chatId,
-          messages: formattedMessages,
-        }),
-      );
+      dispatch(addMessages({ chatId, messages: messages.map((msg) => ({ content: msg.content, role: msg.role })) }));
       dispatch(setCurrentChatId(chatId));
+
+      // Restore file context if the chat had an active file
+      if (restoredFileContext?.fileId) {
+        dispatch(setFileContext({ ...restoredFileContext, status: "ready" }));
+      } else {
+        dispatch(clearFileContext());
+      }
     } catch (error) {
       dispatch(setError(error.message || "Failed to load messages"));
     } finally {
@@ -196,6 +109,7 @@ export const useChat = () => {
 
   function handleNewChat() {
     dispatch(setCurrentChatId(null));
+    dispatch(clearFileContext()); // Clear file context on new chat
   }
 
   async function handleDeleteChat(chatId) {
@@ -210,6 +124,55 @@ export const useChat = () => {
     }
   }
 
+  /**
+   * Handles file upload — processes PDF through backend RAG pipeline.
+   * Updates Redux fileContext through all indexing states.
+   */
+  async function handleUploadFile(file, chatId) {
+    if (!file || !chatId) return;
+
+    // Show uploading state immediately
+    dispatch(setFileContext({ fileName: file.name, status: "uploading" }));
+
+    try {
+      // Simulate intermediate states for UX (backend handles all states synchronously)
+      dispatch(setFileContext({ fileName: file.name, status: "parsing" }));
+
+      const result = await uploadFile(file, chatId);
+
+      // Mark as ready with full metadata
+      dispatch(setFileContext({
+        fileId: result.fileId,
+        fileName: result.fileName,
+        status: "ready",
+      }));
+    } catch (err) {
+      const message = err?.message || "File upload failed. Please try again.";
+      dispatch(setFileContext({
+        fileName: file.name,
+        status: "failed",
+        errorMessage: message,
+      }));
+    }
+  }
+
+  /**
+   * Removes the active file context and deletes vectors from Pinecone.
+   */
+  async function handleClearFile() {
+    const currentFileId = fileContext?.fileId;
+    dispatch(clearFileContext());
+
+    if (currentFileId) {
+      try {
+        await removeFile(currentFileId);
+      } catch (err) {
+        console.error("Failed to remove file from Pinecone:", err);
+        // Non-fatal — context already cleared on frontend
+      }
+    }
+  }
+
   return {
     initializeSocketConnection,
     handleSendMessage,
@@ -217,5 +180,8 @@ export const useChat = () => {
     handleOpenChat,
     handleNewChat,
     handleDeleteChat,
+    handleUploadFile,
+    handleClearFile,
   };
 };
+

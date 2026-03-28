@@ -1,0 +1,208 @@
+# RAG File-Upload Implementation Plan
+
+## Background
+Your existing app has: Gemini 2.5-flash for chat, Mistral for title gen/embeddings, Pinecone SDK already installed, a clean Express backend with controllers/services/routes pattern, and a React Redux frontend with `useChat` hook + `InputBar` UI.
+
+## New Dependencies Required
+
+### Backend (install)
+```
+multer           # file upload middleware
+pdf-parse        # PDF text extraction
+uuid             # unique file/session IDs
+```
+
+### Frontend (install)
+```
+axios            # already in use
+```
+No new frontend packages needed.
+
+---
+
+## Backend Architecture — New Files
+
+```
+Backend/src/
+├── routes/
+│   └── file.routes.js               [NEW]
+├── controllers/
+│   └── file.controller.js           [NEW]
+├── services/
+│   ├── pdf.service.js               [NEW] PDF extraction
+│   ├── chunker.service.js           [NEW] Text chunking
+│   ├── embedding.service.js         [NEW] Mistral embeddings
+│   ├── pinecone.service.js          [NEW] Pinecone upsert/query
+│   ├── rag.service.js               [NEW] Full RAG pipeline
+│   └── classifier.service.js        [NEW] Query intent routing
+├── middleware/
+│   └── upload.middleware.js         [NEW] Multer config
+```
+
+### Modified Files
+- `src/app.js` — register new `/api/files` route
+- `src/controllers/chat.controller.js` — add `fileId` + `userId` forwarding into `generateResponse`
+- `src/services/ai.service.js` — add `generateRagResponse()` function
+
+---
+
+## Frontend Architecture — New Files
+
+```
+Frontend/src/features/chat/
+├── components/
+│   └── FileUploadBadge.jsx          [NEW] Active file indicator + clear button
+├── service/
+│   └── file.api.js                  [NEW] Upload API call
+```
+
+### Modified Files
+- `components/InputBar.jsx` — wire up the attach button, show file badge
+- `hooks/useChat.js` — add `handleUploadFile` + `clearFileContext`
+- `service/chat.api.js` — add `fileId` to message send payload
+- `pages/Dashboard.jsx` — pass file state between InputBar and useChat
+
+---
+
+## Detailed Component Design
+
+### 1. `upload.middleware.js`
+- Multer `memStorage` (in-memory buffer, no disk writes needed)
+- `fileFilter`: accept only `application/pdf` → reject others with clean 400 error
+- `limits.fileSize`: 10MB max
+
+### 2. `pdf.service.js`
+- Uses `pdf-parse` to extract text from `buffer`
+- Returns `{ text, pageCount }` or throws on empty/corrupt
+
+### 3. `chunker.service.js`
+- Splits text into chunks of **~800 tokens / ~3200 chars** with **200 char overlap**
+- Returns array of `{ text, index }` objects
+
+### 4. `embedding.service.js`
+- Uses `MistralAI` embeddings model (`mistral-embed`)
+- Batch-embeds all chunks (groups of 20 to respect rate limits)
+- Returns array of vectors
+
+### 5. `pinecone.service.js`
+- Connects using `@pinecone-database/pinecone` (already installed)
+- **Index name**: `rag-documents` (add `PINECONE_INDEX` to `.env`)
+- **Namespace strategy**: `user-{userId}` per user → secure isolation
+- `upsertChunks(vectors, metadata)` — upsert all chunk vectors
+- `queryChunks(queryVector, fileId, userId, topK=5)` — filtered retrieval by `fileId` + `userId`
+- `deleteFileChunks(fileId, userId)` — cleanup on file removal
+
+### 6. `classifier.service.js`
+- Uses a **lightweight Mistral prompt** to classify a user query as `FILE_RELATED` or `GENERAL`
+- Context given: the uploaded file name
+- Fast, cheap, deterministic prompt: returns `true/false` in ~100ms
+- Falls back to `GENERAL` on timeout/error
+
+### 7. `rag.service.js`
+- Orchestrates the full query pipeline:
+  1. Classify query intent
+  2. If `GENERAL` → return `null` (caller falls back to normal LLM)
+  3. If `FILE_RELATED` → embed query → query Pinecone → retrieve top-5 chunks → build grounded prompt → call Gemini → return answer
+
+### 8. `file.controller.js`
+- `POST /api/files/upload`: receive PDF → extract → chunk → embed → upsert → respond `{ fileId, fileName, chunkCount }`
+- `DELETE /api/files/:fileId`: delete all vectors for this file from Pinecone
+
+### 9. `ai.service.js` addition
+- `generateRagResponse(question, retrievedChunks, memoryContext)` — Gemini call with document-grounded prompt
+- Tells model: "Answer ONLY from these excerpts. If not found, say so."
+
+### 10. `chat.controller.js` update
+- Accept optional `fileId` in `sendMessage` body
+- If `fileId` present → call `ragService.handleQuery(message, fileId, userId)`
+- If returns `null` (general question) → continue normal flow
+- All existing logic (memory, title gen, message save) remains identical
+
+---
+
+## Frontend Design
+
+### InputBar changes
+- Hidden `<input type="file" accept=".pdf">` triggered by clicking the existing attach button
+- Shows `FileUploadBadge` above input when file is active
+- Upload triggers `handleUploadFile` from `useChat`
+- Three status states displayed inline: `uploading` / `indexing` / `ready`
+
+### FileUploadBadge component
+- Small, dismissable badge above the input bar showing: `📄 filename.pdf • Ready ✕`
+- Clicking ✕ calls `clearFileContext()`
+- Subtle pulse animation while indexing
+
+### sendMessage integration
+- When a `fileId` is in context, it's appended to the existing `sendMessage` API call payload
+- Backend handles routing transparently; frontend UX doesn't change
+
+---
+
+## Environment Variables to Add
+```env
+PINECONE_INDEX=rag-documents
+PINECONE_ENVIRONMENT=us-east-1   # your Pinecone region
+```
+
+---
+
+## Data Flow Diagrams
+
+### Upload Flow
+```
+User picks PDF
+  → InputBar attach button
+  → file.api.js POST /api/files/upload (FormData)
+  → upload.middleware (multer, validates PDF ≤10MB)
+  → file.controller
+  → pdf.service (extract text)
+  → chunker.service (split into 800-char chunks w/ overlap)
+  → embedding.service (Mistral batch embed all chunks)
+  → pinecone.service (upsert vectors with metadata)
+  → response: { fileId, fileName, chunkCount }
+  → frontend stores fileId in local state
+  → FileUploadBadge shows "Ready to chat with file"
+```
+
+### Query Flow
+```
+User sends message
+  → chat.controller.sendMessage receives { message, chatId, fileId? }
+  → If fileId present:
+      → classifier.service: is query file-related?
+      → If YES:
+          → embed query (Mistral)
+          → pinecone.service.queryChunks (filtered by fileId + userId)
+          → build grounded prompt with top chunks
+          → generateRagResponse via Gemini
+      → If NO:
+          → falls through to normal generateResponse()
+  → Either path: save message, save aiMessage, return response
+```
+
+---
+
+## Security Considerations
+- File access filtered by both `fileId` AND `userId` in Pinecone metadata
+- No disk files persist; buffers are cleaned by GC
+- File size + type validated server-side before any processing
+- No file content ever exposed in API response
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. Do you have a Pinecone index already created named `rag-documents`? If not, I can add auto-creation code on startup.
+> 2. What is your Pinecone environment/region? (e.g. `us-east-1`) — needed for the `.env`.
+> 3. Should the file context persist across page refreshes (stored in Redux/localStorage) or reset on page reload?
+
+---
+
+## Verification Plan
+1. Upload a PDF → check backend logs for chunk count + Pinecone upsert success
+2. Ask a question about file content → verify RAG path taken in logs
+3. Ask "what is React" with file active → verify normal LLM path taken (classifier correctly routes)
+4. Verify existing chat/login/register/sidebar/history unchanged
+5. Test mobile layout of FileUploadBadge + InputBar

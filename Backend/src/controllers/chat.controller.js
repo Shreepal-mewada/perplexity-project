@@ -1,12 +1,13 @@
-import { generateResponse, generateChatTitle } from "../services/ai.service.js";
+import { generateResponse, generateChatTitle, generateRagResponse } from "../services/ai.service.js";
 import chatModel from "../models/chat.model.js";
 import messageModel from "../models/message.model.js";
 import chatMemoryModel from "../models/chatMemory.model.js";
 import { getRelevantMemories, processNewMessages } from "../services/memory.service.js";
+import { handleRagQuery } from "../services/rag.service.js";
 
 export async function sendMessage(req, res) {
   try {
-    const { message, chatId } = req.body;
+    const { message, chatId, fileId } = req.body;
 
     const userId = req.user.id;
     let title = null,
@@ -43,14 +44,38 @@ export async function sendMessage(req, res) {
       topMemories: topMemories
     };
 
-    // Fetch only the last 15 raw messages to maintain immediate flow
-    const recentMessages = await messageModel.find({ chat: activeChatId })
-      .sort({ createdAt: -1 })
-      .limit(15);
-    recentMessages.reverse();
+    let result;
 
-    // Generate output injected with context
-    const result = await generateResponse(recentMessages, memoryContext);
+    // --- RAG Routing ---
+    // Determine active fileId: from request body OR from the linked chat document
+    const activeChatDoc = await chatModel.findById(activeChatId);
+    const activeFileId = fileId || activeChatDoc?.fileId || null;
+
+    if (activeFileId) {
+      const ragResult = await handleRagQuery(message, activeFileId, userId);
+
+      if (ragResult.type === "rag") {
+        // File-related question → answer from document context
+        result = await generateRagResponse(message, ragResult.context, ragResult.fileName, memoryContext);
+      } else if (ragResult.type === "not_found") {
+        // File-related but no relevant chunks found
+        result = `I couldn't find relevant information about that in the uploaded document **${ragResult.fileName}**. The document may not contain details on this topic, or try rephrasing your question.`;
+      } else {
+        // General question despite active file → normal LLM
+        const recentMessages = await messageModel.find({ chat: activeChatId })
+          .sort({ createdAt: -1 })
+          .limit(15);
+        recentMessages.reverse();
+        result = await generateResponse(recentMessages, memoryContext);
+      }
+    } else {
+      // --- Normal LLM Path (no file active) ---
+      const recentMessages = await messageModel.find({ chat: activeChatId })
+        .sort({ createdAt: -1 })
+        .limit(15);
+      recentMessages.reverse();
+      result = await generateResponse(recentMessages, memoryContext);
+    }
 
     const aiMessage = await messageModel.create({
       chat: activeChatId,
@@ -107,6 +132,10 @@ export async function getMessages(req, res) {
   res.status(200).json({
     message: "Messages retrieved successfully",
     messages,
+    // Include file context so frontend can restore active file badge on refresh
+    fileContext: chat.fileId
+      ? { fileId: chat.fileId, fileName: chat.fileName }
+      : null,
   });
 }
 

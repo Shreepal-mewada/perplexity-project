@@ -23,281 +23,166 @@ const Sidebar = ({
   const username = actualUser?.username || actualUser?.name || "User";
   const initial = username.charAt(0).toUpperCase();
 
-  // Collapsed sidebar view - Icon only
-  if (isCollapsed) {
-    return (
-      <aside className="hidden md:flex h-screen w-15 border-r border-border bg-background flex-col items-center py-3 gap-3 shrink-0 justify-between">
-        <div className="flex flex-col items-center gap-3 w-full">
-          {/* Expand Sidebar Button (App Logo) */}
-          <button
-            onClick={onToggleSidebarDesktop}
-            className="p-3 hover:bg-surface rounded-lg transition text-foreground hover:text-foreground"
-            title="Show sidebar"
-          >
-            <img
-              src={appIcon}
-              alt="App Icon"
-              className="w-7 h-7 object-cover rounded-full"
-            />
-          </button>
-
-          {/* Divider */}
-          <div className="w-8 h-px bg-border"></div>
-
-          {/* New Chat Button */}
-          <button
-            onClick={onNewChat}
-            className=" p-3 hover:bg-surface rounded-lg transition text-foreground hover:text-primary relative group"
-            title="New chat"
-          >
-            <span className="material-symbols-outlined">add_circle</span>
-            <div className="absolute left-full ml-2 px-1.5 py-0.5 bg-surface border border-border text-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
-              New Chat
-            </div>
-          </button>
-
-          {chats && chats.length > 0 && (
-            <>
-              {/* Chat History Icon */}
-              <button
-                onClick={onToggleSidebarDesktop}
-                className="p-3 hover:bg-surface rounded-lg transition text-foreground hover:text-primary relative group"
-                title="Chat History"
-              >
-                <span className="material-symbols-outlined">history</span>
-                <div className="absolute left-full ml-2 px-2 py-1 bg-surface border border-border text-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
-                  Chat History
-                </div>
-              </button>
-
-              {/* Search Chat Icon */}
-              <button
-                onClick={onToggleSidebarDesktop}
-                className="p-3 hover:bg-surface rounded-lg transition text-foreground hover:text-primary relative group"
-                title="Search Chat"
-              >
-                <span className="material-symbols-outlined">search</span>
-                <div className="absolute left-full ml-2 px-2 py-1 bg-surface border border-border text-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
-                  Search Chat
-                </div>
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* User Profile Button at Bottom */}
-        <div className="flex bg-surface rounded-full flex-col items-center gap-1 mb-1  hover:rounded-full">
-          <button
-            onClick={handleLogout}
-            className=" p-3 hover:bg-red-500/20 rounded-full transition text-red-500/80 relative group flex items-center justify-center -mb-1 mt-1 shrink-0"
-          >
-            <span className="material-symbols-outlined text-[16px]">
-              logout
-            </span>
-            <div className="absolute left-full ml-2 px-1.5 py-0.5 bg-surface border border-border text-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl z-50">
-              Logout
-            </div>
-          </button>
-
-          <button
-            onClick={onToggleSidebarDesktop}
-            className="p-1 hover:bg-surface  hover:rounded-full transition text-secondary relative group"
-          >
-            <div className="flex h-8 w-8 items-center  hover:rounded-full justify-center rounded-full bg-white text-secondary font-bold text-xs text-amber-50">
-              {initial}
-            </div>
-            <div className=" hover:rounded-full absolute left-full ml-2 px-1.5 py-0.5 bg-surface border border-border text-foreground text-xs rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap shadow-xl">
-              {username}
-            </div>
-          </button>
-        </div>
-      </aside>
-    );
-  }
-
-  // Full sidebar view
   return (
     <>
-      {/* Sidebar Overlay (Mobile only) */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={() => onToggleSidebar(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed md:relative left-0 top-0 z-40 h-[100dvh] w-80 shrink-0 border-r border-border bg-background backdrop-blur-xl transition-transform duration-300 md:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      {/* Sidebar Overlay (Mobile only) with smooth fade opacity */}
+      <div
+        className={`fixed inset-0 z-30 bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-300 ease-in-out ${
+          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
+        onClick={() => onToggleSidebar(false)}
+      />
+
+      {/* Unified Sidebar Container */}
+      <aside
+        className={`fixed md:relative left-0 top-0 z-40 h-[100dvh] shrink-0 border-r border-border/40 bg-background/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex flex-col justify-between
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${isCollapsed ? "w-20" : "w-80"}
+        `}
       >
-        <div className="flex h-full flex-col">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           {/* Logo Section */}
-          <div className="border-b border-border p-3 shrink-0 ">
-            <div className="flex items-center justify-between gap-2 ">
-              <div className="flex items-center gap-2 flex-1 min-w-0 rounded-full">
-                <div className="w-7 h-7  overflow-hidden flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 bg-primary/20 rounded-full">
-                  <img
-                    src={appIcon}
-                    alt="App Icon"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-base font-bold tracking-tight text-foreground font-display">
-                    Zyricon AI
-                  </h1>
-                  {/* <p className="text-xs text-white/80 font-medium">Premium</p> */}
-                </div>
+          <div className={`flex items-center border-b border-border/30 shrink-0 transition-all duration-300 ${isCollapsed ? 'p-4 justify-center' : 'p-4 justify-between gap-3'}`}>
+            <div className={`flex items-center gap-3 overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-full justify-center' : 'flex-1'}`}>
+              <button onClick={onToggleSidebarDesktop} className="w-9 h-9 rounded-xl overflow-hidden shadow-md shadow-primary/10 shrink-0 bg-primary/10 flex items-center justify-center group relative ring-1 ring-border hover:ring-primary/40 transition-all">
+                <img src={appIcon} alt="App Icon" className="w-full h-full object-cover" />
+                {isCollapsed && (
+                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover:translate-y-0">
+                    Expand Sidebar
+                  </div>
+                )}
+              </button>
+              
+              <div className={`flex flex-col min-w-0 transition-all duration-300 origin-left ${isCollapsed ? 'opacity-0 w-0 scale-90' : 'opacity-100 w-auto scale-100'}`}>
+                <h1 className="text-[17px] font-extrabold tracking-tight text-foreground font-display truncate">Zyricon AI</h1>
               </div>
-              {/* Hide Sidebar Button */}
-              <button
-                onClick={onToggleSidebarDesktop}
-                className="hidden md:flex p-2 hover:bg-surface rounded-lg transition text-foreground shrink-0"
-                title="Hide sidebar"
-              >
-                <span className="material-symbols-outlined">chevron_left</span>
-              </button>
-
-              {/* Close Mobile Sidebar Button */}
-              <button
-                onClick={() => onToggleSidebar(false)}
-                className="md:hidden flex p-2 hover:bg-surface rounded-lg transition text-foreground shrink-0"
-                title="Close sidebar"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
             </div>
-          </div>
 
-          {/* New Chat Button */}
-          <div className="p-2 py-2 shrink-0 z-10 pb-4">
-            <button
-              onClick={onNewChat}
-              className="group relative w-full flex items-center  gap-1.5 pl-2 px-1 py-2.5 font-semibold text-primary-foreground rounded-xl overflow-hidden transition-all duration-300 active:scale-95 glow-blue-sm"
-            >
-              {/* Gradient Background */}
-              <div className="absolute inset-0 bg-primary rounded-xl opacity-100 group-hover:opacity-90 transition-opacity duration-300" />
+            {!isCollapsed && (
+              <button onClick={onToggleSidebarDesktop} className="hidden md:flex p-1.5 hover:bg-surface/80 rounded-lg transition-colors text-muted-foreground hover:text-foreground shrink-0" title="Collapse sidebar">
+                <span className="material-symbols-outlined text-[20px]">menu_open</span>
+              </button>
+            )}
 
-              {/* Border Glow */}
-              <div className="absolute inset-0 rounded-xl border border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Content */}
-              <span className="material-symbols-outlined text-xl relative z-10 group-hover:scale-110 transition-transform duration-300">
-                add_circle
-              </span>
-              <span className="relative z-10 font-display font-bold text-sm">
-                New Chat
-              </span>
+            <button onClick={() => onToggleSidebar(false)} className="md:hidden flex p-1.5 hover:bg-surface/80 rounded-lg transition-colors text-foreground shrink-0" title="Close sidebar">
+              <span className="material-symbols-outlined shrink-0 text-[20px]">close</span>
             </button>
           </div>
 
-          {/* Search Bar */}
-          {chats && chats.length > 0 && (
-            <div className="px-2 pb-6 shrink-0">
-              <div className="flex items-center gap-2 rounded-xl glass px-2 py-1.5 hover:border-glass-border/80 transition">
-                <span
-                  className="material-symbols-outlined text-muted-foreground text-base"
-                  title="Search Chat"
-                >
-                  search
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search chats..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
+          {/* New Chat Button */}
+          <div className={`shrink-0 z-10 transition-all duration-300 ${isCollapsed ? 'p-3 mt-2' : 'p-4'}`}>
+            <button onClick={onNewChat} className={`group relative flex items-center justify-center font-semibold text-primary-foreground rounded-xl overflow-hidden transition-all duration-300 active:scale-95 glow-blue-sm shadow-md ${isCollapsed ? 'h-11 w-11 mx-auto' : 'w-full py-3 px-4 gap-2.5'}`}>
+              <div className="absolute inset-0 bg-primary opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 border border-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="material-symbols-outlined text-[22px] relative z-10 group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">add</span>
+              <span className={`relative z-10 font-display font-medium text-[14px] transition-all duration-300 whitespace-nowrap overflow-hidden ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                New Chat
+              </span>
+              
+              {isCollapsed && (
+                <div className="absolute left-full ml-4 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover:translate-y-0">
+                  New Chat
+                </div>
+              )}
+            </button>
+          </div>
 
-          {/* Chat History */}
-          {chats && chats.length > 0 && (
-            <div className="flex-1 overflow-y-auto px-2 pb-2 min-h-0 scrollbar-styled">
-              <div className="flex items-center gap-1 px-1 pb-2">
-                <span
-                  className="material-symbols-outlined text-muted-foreground text-base"
-                  title="Chat History"
-                >
-                  history
-                </span>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Chat History
-                </p>
-              </div>
-              <div className="space-y-2">
-                {chats.map((chat) => (
-                  <button
-                    key={chat.id}
-                    onClick={() => {
-                      onSelectChat(chat);
-                      onToggleSidebar(false);
-                    }}
-                    className={`group w-full rounded-xl px-2 py-2 text-left transition flex items-center justify-between gap-2 ${
-                      activeChat?.id === chat.id
-                        ? "glass text-foreground shadow-lg shadow-primary/10 border-primary/30"
-                        : "border border-transparent hover:glass text-muted-foreground hover:text-foreground"
-                    }`}
-                    title={chat.title}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium">
-                        {chat.title}
-                      </p>
-                      <p
-                        className={`mt-1 text-[10px] ${activeChat?.id === chat.id ? "text-primary/80" : "text-muted-foreground/60"}`}
-                      >
-                        {chat.time}
-                      </p>
+          {/* Scrolling Main content area */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-styled flex flex-col pt-1">
+            {chats && chats.length > 0 && (
+              <div className={`transition-all duration-300 ${isCollapsed ? 'flex flex-col items-center gap-3 px-3' : 'px-4 pb-4'}`}>
+                {isCollapsed ? (
+                  <>
+                    <button onClick={onToggleSidebarDesktop} className="w-11 h-11 flex items-center justify-center hover:bg-surface/60 rounded-xl transition-all text-muted-foreground hover:text-primary relative group shrink-0">
+                      <span className="material-symbols-outlined text-[20px]">search</span>
+                      <div className="absolute left-full ml-4 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover:translate-y-0">Search Chat</div>
+                    </button>
+                    <button onClick={onToggleSidebarDesktop} className="w-11 h-11 flex items-center justify-center hover:bg-surface/60 rounded-xl transition-all text-muted-foreground hover:text-primary relative group shrink-0 mt-1">
+                      <span className="material-symbols-outlined text-[20px]">history</span>
+                      <div className="absolute left-full ml-4 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover:translate-y-0">Chat History</div>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Search Input */}
+                    <div className="mb-5 relative group/search">
+                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                         <span className="material-symbols-outlined text-muted-foreground/60 text-[18px] group-focus-within/search:text-primary transition-colors duration-300">search</span>
+                      </div>
+                      <input type="text" placeholder="Search chats..." value={searchQuery} onChange={(e) => onSearchChange(e.target.value)} className="w-full bg-surface/40 hover:bg-surface/60 focus:bg-surface/80 border border-transparent focus:border-primary/30 rounded-xl py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none transition-all duration-300" />
                     </div>
-                    <div
-                      role="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteChat(chat.id);
-                      }}
-                      className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-md transition-all shrink-0"
-                      title="Delete chat"
+                    
+                    {/* History Label */}
+                    <div className="flex items-center gap-2 px-1 pb-2 opacity-100 transition-opacity duration-300">
+                      <span className="material-symbols-outlined text-muted-foreground/50 text-[16px]">history</span>
+                      <p className="text-[11px] font-bold text-muted-foreground/60 tracking-wider">REPORTS</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Chat List Skeletons/Items (Expanded) */}
+                <div className={`space-y-1 transition-all duration-300 origin-top flex flex-col w-full ${isCollapsed ? 'scale-y-0 h-0 opacity-0 overflow-hidden' : 'scale-y-100 h-auto opacity-100'}`}>
+                  {chats.map((chat) => (
+                    <button
+                      key={chat.id}
+                      onClick={() => { onSelectChat(chat); onToggleSidebar(false); }}
+                      className={`group w-full rounded-xl px-3 py-2.5 text-left transition-all duration-200 flex items-center justify-between gap-3 overflow-hidden ${
+                         activeChat?.id === chat.id ? "bg-primary/10 text-primary border border-primary/20 shadow-sm" : "border border-transparent hover:bg-surface/60 text-muted-foreground hover:text-foreground"
+                      }`}
+                      title={chat.title}
                     >
-                      <span className="material-symbols-outlined text-[16px]">
-                        delete
-                      </span>
-                    </div>
-                  </button>
-                ))}
+                      <div className="min-w-0 flex-1 transition-all">
+                         <p className={`truncate text-sm font-medium transition-colors ${activeChat?.id === chat.id ? 'text-foreground' : ''}`}>{chat.title}</p>
+                         <p className={`mt-0.5 text-[11px] truncate transition-colors ${activeChat?.id === chat.id ? "text-primary/70" : "text-muted-foreground/50"}`}>{chat.time}</p>
+                      </div>
+                      <div role="button" onClick={(e) => { e.stopPropagation(); onDeleteChat(chat.id); }} className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/15 text-muted-foreground/40 hover:text-red-500 rounded-lg transition-all duration-200 shrink-0 -mr-1" title="Delete chat">
+                         <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
 
-          {/* Bottom Section - User Profile Only */}
-          <div className="border-t border-border p-2 shrink-0 mt-auto">
-            <div className="flex items-center justify-between rounded-xl glass p-2 hover:border-glass-border/80 transition group premium-shadow">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-secondary font-bold text-xs">
+        {/* User Profile Footer */}
+        <div className={`border-t border-border/30 shrink-0 transition-all duration-300 bg-background ${isCollapsed ? 'p-3 flex flex-col items-center gap-3 pb-5' : 'p-4 pb-5'}`}>
+          <div className={`flex rounded-2xl transition-all duration-300 relative group overflow-visible
+             ${isCollapsed ? 'flex-col items-center gap-3 bg-transparent justify-center w-full' : 'items-center justify-between bg-surface/30 hover:bg-surface/50 border border-border/30 hover:border-border/60 p-2 pl-2.5'}
+          `}>
+             {/* Logout Button (when collapsed) */}
+             {isCollapsed && (
+               <button onClick={handleLogout} className="w-11 h-11 hover:bg-red-500/10 rounded-xl transition-all text-muted-foreground hover:text-red-500 relative group/btn flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[20px]">logout</span>
+                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover/btn:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover/btn:translate-y-0">Logout</div>
+               </button>
+             )}
+
+             {/* User Avatar & Info */}
+             <button onClick={isCollapsed ? onToggleSidebarDesktop : undefined} className={`flex items-center gap-3 min-w-0 rounded-2xl transition-all ${isCollapsed ? 'w-11 h-11 relative group/user hover:bg-surface/60 justify-center' : 'flex-1'}`}>
+                <div className={`flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/80 to-secondary/80 text-white font-bold transition-all shadow-md ${isCollapsed ? 'h-9 w-9 text-sm' : 'h-10 w-10 text-[15px]'}`}>
                   {initial}
                 </div>
-                <div className="min-w-0 pr-2">
-                  <p className="text-xs font-semibold text-foreground truncate">
-                    {username}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground truncate">
-                    Free Plan
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-md transition-all shrink-0"
-                title="Logout"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  logout
-                </span>
-              </button>
-            </div>
+                
+                {isCollapsed && (
+                  <div className="absolute left-full ml-4 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover/user:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover/user:translate-y-0">{username}</div>
+                )}
+
+                {!isCollapsed && (
+                  <div className="min-w-0 flex-1 text-left transition-opacity duration-300 pr-2">
+                    <p className="text-sm font-semibold text-foreground truncate">{username}</p>
+                    <p className="text-[11px] text-muted-foreground/70 truncate tracking-wide font-medium mt-0.5">Free Plan</p>
+                  </div>
+                )}
+             </button>
+
+             {/* Logout Button (when expanded) */}
+             {!isCollapsed && (
+               <button onClick={handleLogout} className="p-2.5 opacity-60 hover:opacity-100 hover:bg-red-500/15 text-muted-foreground hover:text-red-500 rounded-xl transition-all duration-200 shrink-0 mr-0.5" title="Logout">
+                 <span className="material-symbols-outlined text-[20px]">logout</span>
+               </button>
+             )}
           </div>
         </div>
       </aside>

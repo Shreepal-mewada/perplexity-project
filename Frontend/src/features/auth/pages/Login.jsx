@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import { useAuth } from "../hooks/useAuth";
 import { Sparkles } from "lucide-react";
-import TargetCursor from "../../landing/components/TargetCursor";
 import ButtonWithIcon from "@/components/ui/button-with-icon";
 import { AnimatedAuthCard } from "@/components/ui/animated-auth-card";
 
@@ -70,8 +69,6 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-      <TargetCursor targetSelector=".cursor-target" />
-
       <AnimatedAuthCard>
 
         <div className="text-center space-y-3 relative z-10">

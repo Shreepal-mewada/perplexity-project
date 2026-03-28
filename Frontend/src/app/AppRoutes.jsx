@@ -10,10 +10,34 @@ import Landing from "../features/landing/pages/Landing";
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-      <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+      <Route path="/" element={
+        <PublicRoute>
+          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+            <Landing />
+          </div>
+        </PublicRoute>
+      } />
+      <Route path="/login" element={
+        <PublicRoute>
+          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+            <Login />
+          </div>
+        </PublicRoute>
+      } />
+      <Route path="/register" element={
+        <PublicRoute>
+          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+            <Register />
+          </div>
+        </PublicRoute>
+      } />
+      <Route path="/dashboard" element={
+        <Protected>
+          <div className="animate-in fade-in duration-700 ease-out h-full w-full">
+            <Dashboard />
+          </div>
+        </Protected>
+      } />
     </Routes>
   );
 }

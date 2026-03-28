@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { BrowserRouter } from "react-router";
 import AppRoutes from "./AppRoutes";
 import { useAuth } from "../features/auth/hooks/useAuth";
+import { AppLoadingSkeleton } from "../components/ui/app-loading-skeleton";
 // import { useSelector } from "react-redux";
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
   }, [handleRefresh, handleGetme]);
 
   if (authLoading) {
-    return <div>Loading...</div>;
+    return <AppLoadingSkeleton />;
   }
 
   return (

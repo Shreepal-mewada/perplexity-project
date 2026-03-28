@@ -5,9 +5,9 @@ const api = axios.create({
   withCredentials: true,
 });
 
-export const sendMessage = async ({ message, chatId }) => {
+export const sendMessage = async ({ message, chatId, fileId = null }) => {
   try {
-    const response = await api.post("/message", { chatId, message: message });
+    const response = await api.post("/message", { chatId, message, fileId });
     return response.data;
   } catch (error) {
     throw error.response ? error.response.data : new Error("Network error");

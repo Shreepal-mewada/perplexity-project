@@ -7,8 +7,6 @@ import PremiumTopHeader from "../components/PremiumTopHeader";
 import PremiumWorkspace from "../components/PremiumWorkspace";
 import ChatArea from "../components/ChatArea";
 import InputBar from "../components/InputBar";
-import RightPanel from "../components/RightPanel";
-import CollapsedRightPanel from "../components/CollapsedRightPanel";
 import Sidebar from "../components/Sidebar";
 
 function Dashboard() {
@@ -20,7 +18,6 @@ function Dashboard() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar open state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // Desktop sidebar collapsed state
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showChatInterface, setShowChatInterface] = useState(false); // Show chat interface after starting a chat
   const [hasInitialized, setHasInitialized] = useState(false); // Track if initial chats fetch is done
@@ -128,6 +125,36 @@ function Dashboard() {
     } catch (error) {
       console.error("Failed to send message:", error);
     }
+  };
+
+  /**
+   * Handles PDF upload from InputBar's attach button.
+   * If no active chat, sends a first bootstrap message to create one, then uploads.
+   */
+  const handleUploadFile = async (file) => {
+    // Grab chatId from the hook's store reference (not local state, which is stale)
+    const storeState = window.__REDUX_STORE__?.getState?.()?.chat || {};
+    let activeChatId = storeState.currentChatId || currentChatId;
+
+    // If still no chat, create one first via a bootstrap message
+    if (!activeChatId) {
+      setShowChatInterface(true);
+      await chat.handleSendMessage({
+        message: `I've uploaded a file: ${file.name}. Please help me analyze it.`,
+        chatId: null,
+      });
+      // Re-read from Redux after dispatch settles
+      const updatedState = window.__REDUX_STORE__?.getState?.()?.chat || {};
+      activeChatId = updatedState.currentChatId;
+    }
+
+    if (activeChatId) {
+      await chat.handleUploadFile(file, activeChatId);
+    }
+  };
+
+  const handleClearFile = async () => {
+    await chat.handleClearFile();
   };
 
   // Show Welcome Screen only if initialized AND no chats and no chat interface request
@@ -262,35 +289,19 @@ function Dashboard() {
             messages={activeChat?.messages || []}
             loading={isLoading}
             currentTitle={activeChat?.title || "New Chat"}
-            rightPanelVisible={rightPanelOpen}
-            onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
           />
         </div>
 
         <div className="flex-shrink-0">
           <InputBar
             onSendMessage={handleSendMessage}
+            onUploadFile={handleUploadFile}
+            onClearFile={handleClearFile}
             disabled={isLoading}
             isLoading={isLoading}
           />
         </div>
       </div>
-
-      {/* Right Panel */}
-      {/* {rightPanelOpen ? (
-        <div className="transition-all duration-300">
-          <RightPanel
-            isOpen={rightPanelOpen}
-            sources={activeChat?.sources || []}
-            relatedQuestions={activeChat?.relatedQuestions || []}
-            onToggleRightPanel={() => setRightPanelOpen(!rightPanelOpen)}
-          />
-        </div>
-      ) : (
-        <CollapsedRightPanel
-          onToggleRightPanel={() => setRightPanelOpen(true)}
-        />
-      )} */}
     </div>
   );
 }

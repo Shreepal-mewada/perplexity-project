@@ -7,6 +7,8 @@ const chatSlice = createSlice({
     currentChatId: null,
     isLoading: false,
     error: null,
+    // Active file context for RAG — restored on chat open
+    fileContext: null, // { fileId, fileName, status, errorMessage? }
   },
   reducers: {
     createNewChat: (state, action) => {
@@ -48,7 +50,6 @@ const chatSlice = createSlice({
     setLoading: (state, action) => {
       state.isLoading = action.payload;
     },
-
     setError: (state, action) => {
       state.error = action.payload;
     },
@@ -65,8 +66,17 @@ const chatSlice = createSlice({
         state.currentChatId = null;
       }
     },
+    // RAG file context reducers
+    setFileContext: (state, action) => {
+      // payload: { fileId, fileName, status, errorMessage? }
+      state.fileContext = action.payload;
+    },
+    clearFileContext: (state) => {
+      state.fileContext = null;
+    },
   },
 });
+
 export const {
   setChats,
   setCurrentChatId,
@@ -77,5 +87,9 @@ export const {
   addNewMessage,
   addMessages,
   removeChat,
+  setFileContext,
+  clearFileContext,
 } = chatSlice.actions;
+
 export default chatSlice.reducer;
+

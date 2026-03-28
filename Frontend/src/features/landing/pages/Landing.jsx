@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 import MagicRings from "../components/MagicRings";
 import DecryptedText from "../components/DecryptedText";
-import TargetCursor from "../components/TargetCursor";
 import ScrollStack, { ScrollStackItem } from "../components/ScrollStack";
 import ButtonWithIcon from "@/components/ui/button-with-icon";
 import { ArrowRight } from "lucide-react";
@@ -32,7 +31,6 @@ const Landing = () => {
 
   return (
     <div className="min-h-[100dvh] w-full bg-background text-foreground font-body selection:bg-primary/30 overflow-x-hidden relative">
-      <TargetCursor targetSelector=".cursor-target" />
       {/* Background Orbs */}
       <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[150px] rounded-full"></div>
@@ -44,9 +42,9 @@ const Landing = () => {
 
       <main className="pb-20">
         {/* Hero Section */}
-        <section className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-hidden mt-[-80px] pt-[80px]">
+        <section className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-hidden">
           {/* Background Animation */}
-          <div className="absolute inset-0 pt-60 flex justify-center items-center overflow-hidden pointer-events-auto z-0">
+          <div className="absolute inset-0 flex justify-center items-center overflow-hidden pointer-events-auto z-0 mt-[10%] md:mt-0">
             <MagicRings
               color="#BC4C23"
               colorTwo="#ffffff"
@@ -77,9 +75,9 @@ const Landing = () => {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-background/40 to-background/90 z-0 pointer-events-none"></div>
 
           {/* Hero Content */}
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 pt-28 md:pt-50 pb-20 flex flex-col items-center text-center">
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-12 py-20 mt-16 flex flex-col items-center justify-center text-center">
             <div
-              className="max-w-4xl flex flex-col items-center"
+              className="max-w-4xl flex flex-col items-center w-full"
               style={{ animation: 'fadeSlideUp 1s ease-out forwards' }}
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm text-primary text-[11px] md:text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg">
@@ -87,7 +85,7 @@ const Landing = () => {
                 Introducing Zyricon AI 4.0
               </div>
 
-              <h2 className="text-gray-400 text-1xl md:text-6xl lg:text-[4.5rem] font-bold font-display text-foreground tracking-tight leading-[1.1] mb-6 drop-shadow-lg animate-fade-in-up">
+              <h2 className="text-gray-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold font-display text-foreground tracking-tight leading-[1.1] mb-6 drop-shadow-lg animate-fade-in-up">
                 <DecryptedText text="Built for" animateOn="view" speed={70} maxIterations={10} /> <br className="hidden md:block" />
                 <span className="text-gradient">
                   <DecryptedText text="Curious Minds" animateOn="view" speed={70} maxIterations={20} revealDirection="center" />
@@ -104,19 +102,14 @@ const Landing = () => {
                 />
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-                <ButtonWithIcon asChild className="bg-primary text-primary-foreground shadow-xl glow-blue-sm">
-                  <Link to="/register">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full mt-4">
+                <ButtonWithIcon asChild className="w-full sm:w-auto bg-primary text-primary-foreground shadow-xl glow-blue-sm h-12">
+                  <Link to="/register" className="flex items-center justify-center">
                     Get Started for Free
                   </Link>
                 </ButtonWithIcon>
-                {/* <ButtonWithIcon asChild className="glass text-foreground shadow-lg hover:bg-surface/50">
-                  <Link to="#features">
-                    Explore Features
-                  </Link>
-                </ButtonWithIcon> */}
 
-                <Link to="#features" className="bg-[#0F1013] text-white px-6 py-3 rounded-full" >
+                <Link to="#features" className="w-full sm:w-auto bg-[#0F1013] hover:bg-surface text-white px-8 h-12 rounded-full flex items-center justify-center transition-colors font-medium border border-border" >
                   Explore Features
                 </Link>
               </div>
@@ -140,19 +133,25 @@ const Landing = () => {
         {/* Embedded the rest of the UI from ai-insight-hub */}
         <TrustedStrip />
 
-        <ScrollStack useWindowScroll={true}>
-          <ScrollStackItem itemClassName="glass-strong bg-background p-0 h-auto overflow-hidden">
-            <FeaturesSection />
-          </ScrollStackItem>
-          <ScrollStackItem itemClassName="glass-strong bg-background p-0 h-auto overflow-hidden">
-            <WhyChooseSection />
-          </ScrollStackItem>
-          <ScrollStackItem itemClassName="glass-strong bg-background p-0 h-auto overflow-hidden">
-            <PricingSection />
-          </ScrollStackItem>
-        </ScrollStack>
+        {/* Built strict layout boundaries for ScrollStack and next sections */}
+        <div className="w-full relative py-12 md:py-24 mb-16 md:mb-32">
+          {/* We pass a conditionally smaller itemDistance strictly for mobile cards using window innerWidth check if desired, but padding fixes 99% of it */}
+          <ScrollStack useWindowScroll={true} itemDistance={typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 100}>
+            <ScrollStackItem itemClassName="glass-strong bg-background p-0 overflow-hidden">
+              <FeaturesSection />
+            </ScrollStackItem>
+            <ScrollStackItem itemClassName="glass-strong bg-background p-0 overflow-hidden">
+              <WhyChooseSection />
+            </ScrollStackItem>
+            <ScrollStackItem itemClassName="glass-strong bg-background p-0 overflow-hidden">
+              <PricingSection />
+            </ScrollStackItem>
+          </ScrollStack>
+        </div>
 
-        <HowItWorksSection />
+        <div className="relative z-10">
+          <HowItWorksSection />
+        </div>
         <FAQSection />
         <FinalCTA />
       </main>

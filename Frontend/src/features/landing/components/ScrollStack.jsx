@@ -4,11 +4,10 @@ import Lenis from 'lenis';
 export const ScrollStackItem = ({ children, itemClassName = '' }) => (
   <div className="scroll-stack-wrapper w-full">
     <div
-      className={`scroll-stack-card relative w-full h-auto min-h-[500px] my-8 rounded-[40px] shadow-[0_0_30px_rgba(0,0,0,0.1)] box-border origin-top will-change-transform ${itemClassName}`.trim()}
+      className={`scroll-stack-card relative w-full h-auto min-h-[300px] md:min-h-[500px] my-4 md:my-8 rounded-[40px] shadow-[0_0_30px_rgba(0,0,0,0.1)] box-border origin-top will-change-transform md:overflow-hidden ${itemClassName}`.trim()}
       style={{
         backfaceVisibility: 'hidden',
-        transformStyle: 'preserve-3d',
-        overflow: 'hidden'
+        transformStyle: 'preserve-3d'
       }}
     >
       {children}
@@ -85,6 +84,17 @@ const ScrollStack = ({
     if (!cardsRef.current.length || isUpdatingRef.current) return;
 
     isUpdatingRef.current = true;
+
+    // Mobile Overflow Override: Disable 3D transforms entirely so tall cards scroll normally
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      cardsRef.current.forEach(card => {
+        if (!card) return;
+        card.style.transform = 'none';
+        card.style.filter = 'none';
+      });
+      isUpdatingRef.current = false;
+      return;
+    }
 
     const { scrollTop, containerHeight } = getScrollData();
     const stackPositionPx = parsePercentage(stackPosition, containerHeight);
@@ -252,6 +262,8 @@ const ScrollStack = ({
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
+    const isMobile = window.innerWidth < 768;
+
     const cards = Array.from(
       useWindowScroll
         ? document.querySelectorAll('.scroll-stack-card')
@@ -264,16 +276,19 @@ const ScrollStack = ({
     cards.forEach((card, i) => {
       if (i < cards.length - 1) {
         if (card.parentElement) {
-          card.parentElement.style.marginBottom = `${itemDistance}px`;
+          card.parentElement.style.marginBottom = isMobile ? '32px' : `${itemDistance}px`;
         }
       }
-      card.style.willChange = 'transform, filter';
-      card.style.transformOrigin = 'top center';
-      card.style.backfaceVisibility = 'hidden';
-      card.style.transform = 'translateZ(0)';
-      card.style.webkitTransform = 'translateZ(0)';
-      card.style.perspective = '1000px';
-      card.style.webkitPerspective = '1000px';
+      
+      if (!isMobile) {
+        card.style.willChange = 'transform, filter';
+        card.style.transformOrigin = 'top center';
+        card.style.backfaceVisibility = 'hidden';
+        card.style.transform = 'translateZ(0)';
+        card.style.webkitTransform = 'translateZ(0)';
+        card.style.perspective = '1000px';
+        card.style.webkitPerspective = '1000px';
+      }
     });
 
     setupLenis();
@@ -326,12 +341,12 @@ const ScrollStack = ({
       };
 
   const containerClassName = useWindowScroll
-    ? `relative w-full max-w-7xl mx-auto px-4 ${className}`.trim()
-    : `relative w-full h-full overflow-y-auto overflow-x-visible ${className}`.trim();
+    ? `relative w-full max-w-7xl mx-auto px-4 overflow-hidden md:overflow-visible ${className}`.trim()
+    : `relative w-full h-full overflow-y-auto overflow-hidden md:overflow-visible ${className}`.trim();
 
   return (
     <div className={containerClassName} ref={scrollerRef} style={containerStyles}>
-      <div className="scroll-stack-inner pb-[100vh] relative">
+      <div className="scroll-stack-inner pb-12 md:pb-[100vh] relative">
         {children}
         <div className="scroll-stack-end w-full h-px" />
       </div>
