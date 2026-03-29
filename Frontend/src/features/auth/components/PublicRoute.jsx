@@ -1,17 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router";
+import { Navigate } from "react-router";
 
 function PublicRoute({ children }) {
   const user = useSelector((state) => state.auth.user);
   const loading = useSelector((state) => state.auth.loading);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/dashboard");
-    }
-  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -22,7 +15,7 @@ function PublicRoute({ children }) {
   }
 
   if (user) {
-    return null;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
