@@ -113,44 +113,38 @@ function Dashboard() {
     setSidebarOpen(false); // Close mobile sidebar
   };
 
-  const handleSendMessage = async (message) => {
-    if (!message.trim()) return;
-
+  const handleSend = async ({ message, file }) => {
     try {
       setShowChatInterface(true);
-      await chat.handleSendMessage({
-        message: message.trim(),
-        chatId: currentChatId || null,
-      });
+      if (file) {
+        if (file.type.startsWith("image/")) {
+          return await chat.handleSendWithImage({
+            message,
+            file,
+            chatId: currentChatId || null,
+          });
+        }
+        return await chat.handleSendWithFile({
+          message,
+          file,
+          chatId: currentChatId || null,
+        });
+      } else if (message.trim()) {
+        await chat.handleSendMessage({
+          message: message.trim(),
+          chatId: currentChatId || null,
+        });
+        return true;
+      }
+      return false;
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error("Failed to send message/file:", error);
+      return false;
     }
   };
 
-  /**
-   * Handles PDF upload from InputBar's attach button.
-   * If no active chat, sends a first bootstrap message to create one, then uploads.
-   */
-  const handleUploadFile = async (file) => {
-    // Grab chatId from the hook's store reference (not local state, which is stale)
-    const storeState = window.__REDUX_STORE__?.getState?.()?.chat || {};
-    let activeChatId = storeState.currentChatId || currentChatId;
-
-    // If still no chat, create one first via a bootstrap message
-    if (!activeChatId) {
-      setShowChatInterface(true);
-      await chat.handleSendMessage({
-        message: `I've uploaded a file: ${file.name}. Please help me analyze it.`,
-        chatId: null,
-      });
-      // Re-read from Redux after dispatch settles
-      const updatedState = window.__REDUX_STORE__?.getState?.()?.chat || {};
-      activeChatId = updatedState.currentChatId;
-    }
-
-    if (activeChatId) {
-      await chat.handleUploadFile(file, activeChatId);
-    }
+  const handleSendMessage = async (message) => {
+    return await handleSend({ message });
   };
 
   const handleClearFile = async () => {
@@ -294,8 +288,7 @@ function Dashboard() {
 
         <div className="flex-shrink-0">
           <InputBar
-            onSendMessage={handleSendMessage}
-            onUploadFile={handleUploadFile}
+            onSend={handleSend}
             onClearFile={handleClearFile}
             disabled={isLoading}
             isLoading={isLoading}

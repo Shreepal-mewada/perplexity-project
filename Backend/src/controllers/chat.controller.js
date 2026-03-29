@@ -5,6 +5,26 @@ import chatMemoryModel from "../models/chatMemory.model.js";
 import { getRelevantMemories, processNewMessages } from "../services/memory.service.js";
 import { handleRagQuery } from "../services/rag.service.js";
 
+/**
+ * POST /api/chats/create
+ * Silently creates a new empty chat (no message, no AI response).
+ * Used when a file is staged in the input and no chat exists yet.
+ */
+export async function createChat(req, res) {
+  try {
+    const userId = req.user.id;
+    const { title = "New Chat" } = req.body;
+    const chat = await chatModel.create({ user: userId, title });
+    return res.status(201).json({
+      message: "Chat created successfully.",
+      chat: { _id: chat._id, title: chat.title, createdAt: chat.createdAt, updatedAt: chat.updatedAt },
+    });
+  } catch (error) {
+    console.error("Error in createChat:", error);
+    res.status(500).json({ message: "Failed to create chat.", error: error.message });
+  }
+}
+
 export async function sendMessage(req, res) {
   try {
     const { message, chatId, fileId } = req.body;
@@ -32,9 +52,9 @@ export async function sendMessage(req, res) {
     // Fetch memory context
     let chatMemory = await chatMemoryModel.findOne({ chat: activeChatId });
     if (!chatMemory) {
-       chatMemory = await chatMemoryModel.create({ chat: activeChatId, user: userId });
+      chatMemory = await chatMemoryModel.create({ chat: activeChatId, user: userId });
     }
-    
+
     // Fetch relevant long term facts
     const activeTopics = chatMemory.activeTopics || [];
     const topMemories = await getRelevantMemories(userId, message, activeTopics);

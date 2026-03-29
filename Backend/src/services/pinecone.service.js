@@ -5,8 +5,8 @@ let pineconeIndex = null;
 
 const INDEX_NAME = process.env.PINECONE_INDEX || "shree-vectordb";
 const EMBEDDING_DIMENSION = 1024; // mistral-embed output dimension
-const MIN_SCORE = 0.72; // minimum cosine similarity threshold
-const TOP_K = 5; // number of chunks to retrieve
+const MIN_SCORE = 0.0; // TEMPORARILY DISABLED for debugging (was 0.72)
+const TOP_K = 10; // Increased number of chunks to retrieve
 const PINECONE_REGION = process.env.PINECONE_REGION || "us-east-1";
 const PINECONE_ENVIRONMENT =
   process.env.PINECONE_ENVIRONMENT || process.env.PINECONE_REGION;
@@ -77,6 +77,9 @@ function getIndex(namespace) {
 export async function upsertChunks(chunks, namespace, fileId) {
   const ns = getIndex(namespace);
 
+  console.log(`\n[Pinecone Upsert] Namespace: ${namespace}, fileId: ${fileId}`);
+  console.log(`[Pinecone Upsert] Total chunks to insert: ${chunks.length}`);
+
   const vectors = chunks.map((chunk, i) => ({
     id: `${fileId}-chunk-${i}`,
     values: chunk.vector,
@@ -107,6 +110,10 @@ export async function upsertChunks(chunks, namespace, fileId) {
 export async function queryChunks(queryVector, fileId, userId, namespace) {
   const ns = getIndex(namespace);
 
+  console.log(`\n[Pinecone Retrieval] Namespace: ${namespace}`);
+  console.log(`[Pinecone Retrieval] Filters used: fileId=${fileId}, userId=${userId.toString()}`);
+  console.log(`[Pinecone Retrieval] Executing vector query with topK=${TOP_K}...`);
+
   const result = await ns.query({
     vector: queryVector,
     topK: TOP_K,
@@ -117,13 +124,35 @@ export async function queryChunks(queryVector, fileId, userId, namespace) {
     },
   });
 
-  return (result.matches || [])
-    .filter((match) => match.score >= MIN_SCORE)
-    .map((match) => ({
-      text: match.metadata?.text || "",
-      score: match.score,
-      metadata: match.metadata,
-    }));
+  const allMatches = result.matches || [];
+
+  if (allMatches.length === 0) {
+    console.log(`[Pinecone Retrieval] ⚠️ ZERO matches returned from Pinecone before filtering.`);
+    console.log(`[Pinecone Retrieval] Possible reasons:`);
+    console.log(`  1. No vectors exist in namespace "${namespace}"`);
+    console.log(`  2. Filter mismatch (e.g. metadata fileId or userId were different during upsert)`);
+  } else {
+    console.log(`[Pinecone Retrieval] ✅ Found ${allMatches.length} raw matches before score filtering.`);
+    allMatches.forEach((m, idx) => {
+      console.log(`  -> Match ${idx + 1}: score=${m.score.toFixed(4)}, chunkIndex=${m.metadata?.chunkIndex}`);
+      console.log(`     text preview: ${m.metadata?.text?.substring(0, 60).replace(/\\n/g, " ")}...`);
+    });
+  }
+
+  const filteredMatches = allMatches.filter((match) => match.score >= MIN_SCORE);
+
+  if (allMatches.length > 0 && filteredMatches.length === 0) {
+    console.log(`[Pinecone Retrieval] ⚠️ ALL matches filtered out due to strict MIN_SCORE threshold (${MIN_SCORE}).`);
+    console.log(`  -> Highest score was: ${Math.max(...allMatches.map(m => m.score)).toFixed(4)}`);
+  } else {
+    console.log(`[Pinecone Retrieval] ✅ Returning ${filteredMatches.length} matches after filtering (MIN_SCORE=${MIN_SCORE}).`);
+  }
+
+  return filteredMatches.map((match) => ({
+    text: match.metadata?.text || "",
+    score: match.score,
+    metadata: match.metadata,
+  }));
 }
 
 /**

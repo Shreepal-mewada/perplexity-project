@@ -70,6 +70,9 @@ const ChatArea = ({
                 message={message.content || message.text}
                 sender={message.role === "user" ? "user" : "ai"}
                 isNewReply={message.isNewReply}
+                type={message.type}
+                fileName={message.fileName}
+                url={message.url}
               />
             ))}
             {loading && (

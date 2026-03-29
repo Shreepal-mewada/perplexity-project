@@ -1,5 +1,5 @@
 import { initializeSocketConnection } from "../service/chat.socket";
-import { sendMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
+import { sendMessage, sendImageMessage, getChats, getMessages, deleteChat, createChat } from "../service/chat.api";
 import { uploadFile, removeFile } from "../service/file.api";
 import {
   setChats,
@@ -94,12 +94,9 @@ export const useChat = () => {
       dispatch(addMessages({ chatId, messages: messages.map((msg) => ({ content: msg.content, role: msg.role })) }));
       dispatch(setCurrentChatId(chatId));
 
-      // Restore file context if the chat had an active file
-      if (restoredFileContext?.fileId) {
-        dispatch(setFileContext({ ...restoredFileContext, status: "ready" }));
-      } else {
-        dispatch(clearFileContext());
-      }
+      // Chat history dictates the file context natively on the backend,
+      // so we don't pin it to the input bar.
+      dispatch(clearFileContext());
     } catch (error) {
       dispatch(setError(error.message || "Failed to load messages"));
     } finally {
@@ -109,7 +106,7 @@ export const useChat = () => {
 
   function handleNewChat() {
     dispatch(setCurrentChatId(null));
-    dispatch(clearFileContext()); // Clear file context on new chat
+    dispatch(clearFileContext());
   }
 
   async function handleDeleteChat(chatId) {
@@ -125,34 +122,152 @@ export const useChat = () => {
   }
 
   /**
-   * Handles file upload — processes PDF through backend RAG pipeline.
-   * Updates Redux fileContext through all indexing states.
+   * handleSendWithFile — ChatGPT-style combined send.
+   *
+   * Called when user clicks Send with a pending file staged in the InputBar.
+   * Flow:
+   *   1. If no chat exists → silently create one (POST /api/chats/create)
+   *   2. Upload + index the file (uploading → parsing → ready)
+   *   3. Dispatch a type:"file" user message so the PDF card appears in chat
+   *   4. If the user also typed a message → send it with the fileId attached
+   *   5. Returns true on success / false on error
+   *      (InputBar uses return value to decide whether to clear or keep the file)
    */
-  async function handleUploadFile(file, chatId) {
-    if (!file || !chatId) return;
+  async function handleSendWithFile({ message, file, chatId }) {
+    if (!file) return false;
 
-    // Show uploading state immediately
-    dispatch(setFileContext({ fileName: file.name, status: "uploading" }));
+    let activeChatId = chatId;
 
+    // Step 1: Silently create chat if none exists
+    if (!activeChatId) {
+      try {
+        dispatch(setFileContext({ fileName: file.name, status: "uploading" }));
+        const created = await createChat({ title: file.name.replace(/\.pdf$/i, "") || "New Chat" });
+        activeChatId = created.chat._id;
+        dispatch(createNewChat({ chatId: activeChatId, title: created.chat.title }));
+        dispatch(setCurrentChatId(activeChatId));
+      } catch (err) {
+        dispatch(setFileContext({ fileName: file.name, status: "failed", errorMessage: "Could not start chat." }));
+        return false;
+      }
+    }
+
+    // Step 2: Upload + index the file
     try {
-      // Simulate intermediate states for UX (backend handles all states synchronously)
+      dispatch(setFileContext({ fileName: file.name, status: "uploading" }));
       dispatch(setFileContext({ fileName: file.name, status: "parsing" }));
 
-      const result = await uploadFile(file, chatId);
+      const result = await uploadFile(file, activeChatId);
 
-      // Mark as ready with full metadata
-      dispatch(setFileContext({
-        fileId: result.fileId,
+      // Step 3: Add PDF card and text to chat as a single user message
+      dispatch(addNewMessage({
+        chatId: activeChatId,
+        content: message?.trim() || "",
+        role: "user",
+        type: "file",
         fileName: result.fileName,
-        status: "ready",
+        fileId: result.fileId,
       }));
+
+      // Clear file context from the input bar natively now that it's sent and linked to chat.
+      dispatch(clearFileContext());
+
+      // Step 4: Call backend AI directly if there's text (skips dispatching duplicate user bubble)
+      if (message?.trim()) {
+        try {
+          dispatch(setLoading(true));
+          const data = await sendMessage({
+            message: message.trim(),
+            chatId: activeChatId,
+            fileId: result.fileId,
+          });
+          dispatch(addNewMessage({
+            chatId: activeChatId,
+            content: data.aiMessage.content,
+            role: data.aiMessage.role,
+            isNewReply: true
+          }));
+        } catch (msgErr) {
+          dispatch(setError(msgErr.message || "Failed to send message"));
+        } finally {
+          dispatch(setLoading(false));
+        }
+      } else {
+        // If no text was sent, provide an AI greeting to guide the user
+        setTimeout(() => {
+          dispatch(addNewMessage({
+            chatId: activeChatId,
+            content: `I've read through **${result.fileName}**. What would you like to ask about this document?`,
+            role: "ai",
+            isNewReply: true
+          }));
+        }, 600);
+      }
+
+      return true; // → InputBar clears the pending file from input
     } catch (err) {
-      const message = err?.message || "File upload failed. Please try again.";
-      dispatch(setFileContext({
-        fileName: file.name,
-        status: "failed",
-        errorMessage: message,
+      const errorMsg = err?.message || "File upload failed. Please try again.";
+      dispatch(setFileContext({ fileName: file.name, status: "failed", errorMessage: errorMsg }));
+      return false; // → InputBar keeps the file in input
+    }
+  }
+
+  async function handleSendWithImage({ message, file, chatId }) {
+    if (!file) return false;
+
+    let activeChatId = chatId;
+
+    // Step 1: Create chat if none exists
+    if (!activeChatId) {
+      try {
+        const created = await createChat({ title: file.name || "Image Chat" });
+        activeChatId = created.chat._id;
+        dispatch(createNewChat({ chatId: activeChatId, title: created.chat.title }));
+        dispatch(setCurrentChatId(activeChatId));
+      } catch (err) {
+        dispatch(setError("Could not start chat for image."));
+        return false;
+      }
+    }
+
+    // Step 2: Optimistic UI – Add Image User Message
+    const optimisticMessageId = `opt-${Date.now()}`;
+    const temporaryUrl = URL.createObjectURL(file);
+    dispatch(addNewMessage({
+      chatId: activeChatId,
+      id: optimisticMessageId,
+      content: message?.trim() || "",
+      role: "user",
+      type: "image",
+      fileName: file.name,
+      url: temporaryUrl,
+    }));
+
+    dispatch(setLoading(true));
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      if (message?.trim()) formData.append("message", message.trim());
+      formData.append("chatId", activeChatId);
+
+      const response = await sendImageMessage(formData);
+
+      // Add AI response
+      dispatch(addNewMessage({
+        chatId: activeChatId,
+        content: response.aiMessage.content,
+        role: response.aiMessage.role,
+        isNewReply: true
       }));
+
+      return true;
+    } catch (err) {
+      dispatch(setError(err.message || "Image processing failed."));
+      return false;
+    } finally {
+      URL.revokeObjectURL(temporaryUrl);
+      dispatch(setLoading(false));
     }
   }
 
@@ -168,7 +283,6 @@ export const useChat = () => {
         await removeFile(currentFileId);
       } catch (err) {
         console.error("Failed to remove file from Pinecone:", err);
-        // Non-fatal — context already cleared on frontend
       }
     }
   }
@@ -180,8 +294,8 @@ export const useChat = () => {
     handleOpenChat,
     handleNewChat,
     handleDeleteChat,
-    handleUploadFile,
+    handleSendWithFile,
+    handleSendWithImage,
     handleClearFile,
   };
 };
-

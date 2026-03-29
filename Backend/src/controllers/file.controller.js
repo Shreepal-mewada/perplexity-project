@@ -64,6 +64,8 @@ export async function uploadFile(req, res) {
 
     const { text, pageCount } = await extractTextFromPdf(req.file.buffer);
     fileDoc.pageCount = pageCount;
+    
+    console.log(`\n[File Processing] Extracted text length: ${text.length} characters from ${pageCount} pages.`);
 
     // Step 2: Chunk text
     const chunks = chunkText(text, {
@@ -71,13 +73,17 @@ export async function uploadFile(req, res) {
       fileName,
       userId: userId.toString(),
     });
+    
+    console.log(`[File Processing] Generated ${chunks.length} chunks for ${fileName}`);
 
     // Step 3: Embed chunks
     fileDoc.status = "embedding";
     await fileDoc.save();
 
     const texts = chunks.map((c) => c.text);
+    console.log(`[File Processing] Sending ${texts.length} chunks to mistral-embed...`);
     const vectors = await embedTexts(texts);
+    console.log(`[File Processing] Successfully generated embeddings for ${vectors.length} chunks.`);
 
     // Attach vector to each chunk
     const enrichedChunks = chunks.map((c, i) => ({
@@ -90,6 +96,7 @@ export async function uploadFile(req, res) {
     await fileDoc.save();
 
     await upsertChunks(enrichedChunks, namespace, fileId);
+    console.log(`[File Processing] Successfully upserted chunks to Pinecone.`);
 
     // Step 5: Mark ready
     fileDoc.status = "ready";

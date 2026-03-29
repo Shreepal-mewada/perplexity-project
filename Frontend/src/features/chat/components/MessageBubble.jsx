@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./MessageBubble.css";
 
-const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply = false }) => {
+const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply = false, type, fileName, url }) => {
   const [displayedText, setDisplayedText] = useState(isNewReply && !isLoading && sender === "ai" ? "" : message);
   const [isTyping, setIsTyping] = useState(isNewReply && !isLoading && sender === "ai");
 
@@ -43,6 +43,101 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
       setIsTyping(false);
     }
   };
+
+  // ── Image Upload Card ──
+  if (type === "image") {
+    // url is a blob URL (optimistic) or a server path like /uploads/images/xxx.jpg
+    const imageSrc = url?.startsWith("blob:") ? url : url ? `http://localhost:3000${url}` : null;
+
+    return (
+      <div className="flex w-full justify-end">
+        <div className="flex max-w-[96%] md:max-w-[80%] lg:max-w-[70%] items-start gap-2 md:gap-4 flex-row-reverse">
+          {/* Avatar */}
+          <div className="mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-base font-semibold">
+            <span className="material-symbols-outlined text-[24px]">account_circle</span>
+          </div>
+          {/* Image Card Bubble */}
+          <div className="glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 bg-primary/20 rounded-tr-sm premium-shadow flex flex-col items-end gap-2.5 min-w-[200px] max-w-full">
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 text-right self-end">
+              You
+            </p>
+            {/* Image thumbnail */}
+            {imageSrc && (
+              <div className="w-full overflow-hidden rounded-xl border border-white/10">
+                <img
+                  src={imageSrc}
+                  alt={fileName || "Uploaded image"}
+                  className="w-full max-h-72 object-cover rounded-xl"
+                />
+              </div>
+            )}
+            {/* File name strip */}
+            <div className="flex items-center gap-2 bg-background/40 rounded-lg px-2.5 py-1.5 border border-white/10 w-full">
+              <span
+                className="material-symbols-outlined text-secondary text-[18px]"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
+                image
+              </span>
+              <span className="text-xs font-medium text-foreground truncate">{fileName}</span>
+            </div>
+            {/* Optional user message text */}
+            {message && (
+              <div className="w-full text-left mt-0.5 text-[15px] md:text-base text-foreground break-words whitespace-pre-wrap">
+                <p className="leading-relaxed md:leading-7">{message}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── File Upload Card (ChatGPT-style PDF message) ──
+  if (type === "file") {
+    return (
+      <div className="flex w-full justify-end">
+        <div className="flex max-w-[96%] md:max-w-[85%] lg:max-w-[75%] items-start gap-2 md:gap-4 flex-row-reverse">
+          {/* Avatar */}
+          <div className="mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-base font-semibold">
+            <span className="material-symbols-outlined text-[24px]">account_circle</span>
+          </div>
+          {/* File Card Bubble */}
+          <div className="glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 bg-primary/20 rounded-tr-sm premium-shadow flex flex-col items-end gap-2 min-w-[200px]">
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 text-right">
+              You
+            </p>
+            <div className="flex items-center gap-3 bg-background/40 rounded-xl px-3 py-2.5 border border-white/10 w-full">
+              {/* PDF Icon */}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/15 border border-red-500/20">
+                <span
+                  className="material-symbols-outlined text-red-400 text-[22px]"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  picture_as_pdf
+                </span>
+              </div>
+              {/* File Info */}
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
+                  {fileName}
+                </span>
+                <span className="text-[11px] text-muted-foreground mt-0.5">Uploaded document</span>
+              </div>
+            </div>
+
+            {/* Display message text if it exists */}
+            {message && (
+              <div className="w-full text-left mt-1.5 text-[15px] md:text-base text-foreground break-words whitespace-pre-wrap">
+                <p className="leading-relaxed md:leading-7">{message}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex w-full ${sender === "user" ? "justify-end" : "justify-start"

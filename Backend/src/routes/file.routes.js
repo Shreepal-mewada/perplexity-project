@@ -1,5 +1,9 @@
-import Router from "express";
-import { uploadFile, getFileStatus, deleteFile } from "../controllers/file.controller.js";
+import { Router } from "express";
+import {
+  uploadFile,
+  getFileStatus,
+  deleteFile,
+} from "../controllers/file.controller.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { uploadMiddleware } from "../middleware/upload.middleware.js";
 
