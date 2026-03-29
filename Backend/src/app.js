@@ -10,8 +10,6 @@ import { initializePinecone } from "./services/pinecone.service.js";
 import cors from "cors";
 import morgan from "morgan";
 
-
-
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -71,6 +69,9 @@ app.use("/api/files", fileRoutes);
 app.use("/api/images", imageRoutes);
 app.get("/", (req, res) => {
   res.send("Backend is running");
+});
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
 });
 
 export default app;
