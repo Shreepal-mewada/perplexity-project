@@ -40,8 +40,10 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL, // future Vercel URL
-];
+  process.env.FRONTEND_URL,
+  "https://perplexity-project-15i6gt7j0-shreepal-mewadas-projects.vercel.app",
+  "https://perplexity-project-neon.vercel.app",
+].filter(Boolean);
 
 app.use(
   cors({
@@ -53,7 +55,8 @@ app.use(
       }
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 

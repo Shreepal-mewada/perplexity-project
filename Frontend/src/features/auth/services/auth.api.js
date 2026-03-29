@@ -1,8 +1,9 @@
 import axios from "axios";
 import { store } from "../../../app/app.store";
 
+const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
+  normalizeUrl(import.meta.env.VITE_API_BASE_URL) ||
   "https://perplexity-project-zac5.onrender.com/api";
 const api = axios.create({
   baseURL: `${API_BASE_URL}/auth`,
