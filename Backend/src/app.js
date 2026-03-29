@@ -29,12 +29,32 @@ app.use(morgan("dev"));
 app.use(express.json());
 // Serve static uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//   }),
+// );
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL, // future Vercel URL
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
-  }),
+  })
 );
 
 app.use(express.urlencoded({ extended: true }));
@@ -43,6 +63,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/images", imageRoutes);
+
 
 export default app;
 
