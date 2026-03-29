@@ -22,8 +22,6 @@ router.get("/get-me", authenticate, getMe);
 router.post("/refresh-token", refreshToken);
 router.get("/logout", logoutUser);
 router.get("/logout-all", logoutAllUser);4
-router.get("/", (req, res) => {
-  res.json({ message: "Auth route is working" });
-});
+
 
 export default router;
