@@ -10,10 +10,13 @@ import { initializePinecone } from "./services/pinecone.service.js";
 import cors from "cors";
 import morgan from "morgan";
 
+
+
 import path from "path";
 import { fileURLToPath } from "url";
 
 dotenv.config();
+
 connectToDatabase();
 
 const __filename = fileURLToPath(import.meta.url);

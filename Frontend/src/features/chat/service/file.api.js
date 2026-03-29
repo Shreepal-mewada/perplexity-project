@@ -1,9 +1,14 @@
 import axios from "axios";
 
 const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
+const ensureApiPath = (baseUrl) => {
+  const normalized = normalizeUrl(baseUrl);
+  return normalized.endsWith("/api") ? normalized : `${normalized}/api`;
+};
 const API_BASE_URL =
-  normalizeUrl(import.meta.env.VITE_API_BASE_URL) ||
+  ensureApiPath(import.meta.env.VITE_API_BASE_URL) ||
   "https://perplexity-project-zac5.onrender.com/api";
+console.debug("[Frontend] file API base URL:", API_BASE_URL);
 const fileApi = axios.create({
   baseURL: `${API_BASE_URL}/files`,
   withCredentials: true,
