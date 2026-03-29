@@ -4,9 +4,21 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./MessageBubble.css";
 
-const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply = false, type, fileName, url }) => {
-  const [displayedText, setDisplayedText] = useState(isNewReply && !isLoading && sender === "ai" ? "" : message);
-  const [isTyping, setIsTyping] = useState(isNewReply && !isLoading && sender === "ai");
+const MessageBubble = ({
+  message,
+  sender = "user",
+  isLoading = false,
+  isNewReply = false,
+  type,
+  fileName,
+  url,
+}) => {
+  const [displayedText, setDisplayedText] = useState(
+    isNewReply && !isLoading && sender === "ai" ? "" : message,
+  );
+  const [isTyping, setIsTyping] = useState(
+    isNewReply && !isLoading && sender === "ai",
+  );
 
   useEffect(() => {
     // If it's not a live new reply, don't animate at all.
@@ -21,7 +33,10 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
     let currentIndex = 0;
     const totalDurationMs = Math.min(message.length * 15, 2500);
     const tickRateMs = 30; // ~33 fps
-    const charsPerTick = Math.max(1, Math.floor(message.length / (totalDurationMs / tickRateMs)));
+    const charsPerTick = Math.max(
+      1,
+      Math.floor(message.length / (totalDurationMs / tickRateMs)),
+    );
 
     const intervalId = setInterval(() => {
       currentIndex += charsPerTick;
@@ -47,14 +62,23 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
   // ── Image Upload Card ──
   if (type === "image") {
     // url is a blob URL (optimistic) or a server path like /uploads/images/xxx.jpg
-    const imageSrc = url?.startsWith("blob:") ? url : url ? `http://localhost:3000${url}` : null;
+    const backendHost =
+      import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, "") ||
+      "https://perplexity-project-zac5.onrender.com";
+    const imageSrc = url?.startsWith("blob:")
+      ? url
+      : url
+        ? `${backendHost}${url}`
+        : null;
 
     return (
       <div className="flex w-full justify-end">
         <div className="flex max-w-[96%] md:max-w-[80%] lg:max-w-[70%] items-start gap-2 md:gap-4 flex-row-reverse">
           {/* Avatar */}
           <div className="mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-base font-semibold">
-            <span className="material-symbols-outlined text-[24px]">account_circle</span>
+            <span className="material-symbols-outlined text-[24px]">
+              account_circle
+            </span>
           </div>
           {/* Image Card Bubble */}
           <div className="glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 bg-primary/20 rounded-tr-sm premium-shadow flex flex-col items-end gap-2.5 min-w-[200px] max-w-full">
@@ -79,7 +103,9 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
               >
                 image
               </span>
-              <span className="text-xs font-medium text-foreground truncate">{fileName}</span>
+              <span className="text-xs font-medium text-foreground truncate">
+                {fileName}
+              </span>
             </div>
             {/* Optional user message text */}
             {message && (
@@ -100,7 +126,9 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
         <div className="flex max-w-[96%] md:max-w-[85%] lg:max-w-[75%] items-start gap-2 md:gap-4 flex-row-reverse">
           {/* Avatar */}
           <div className="mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary text-base font-semibold">
-            <span className="material-symbols-outlined text-[24px]">account_circle</span>
+            <span className="material-symbols-outlined text-[24px]">
+              account_circle
+            </span>
           </div>
           {/* File Card Bubble */}
           <div className="glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 bg-primary/20 rounded-tr-sm premium-shadow flex flex-col items-end gap-2 min-w-[200px]">
@@ -122,7 +150,9 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
                 <span className="text-sm font-semibold text-foreground truncate max-w-[160px]">
                   {fileName}
                 </span>
-                <span className="text-[11px] text-muted-foreground mt-0.5">Uploaded document</span>
+                <span className="text-[11px] text-muted-foreground mt-0.5">
+                  Uploaded document
+                </span>
               </div>
             </div>
 
@@ -140,19 +170,22 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
 
   return (
     <div
-      className={`flex w-full ${sender === "user" ? "justify-end" : "justify-start"
-        }`}
+      className={`flex w-full ${
+        sender === "user" ? "justify-end" : "justify-start"
+      }`}
     >
       <div
-        className={`flex max-w-[96%] md:max-w-[85%] lg:max-w-[75%] items-start gap-2 md:gap-4 ${sender === "user" ? "flex-row-reverse" : "flex-row"
-          }`}
+        className={`flex max-w-[96%] md:max-w-[85%] lg:max-w-[75%] items-start gap-2 md:gap-4 ${
+          sender === "user" ? "flex-row-reverse" : "flex-row"
+        }`}
       >
         {/* Avatar */}
         <div
-          className={`mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold ${sender === "user"
-            ? "bg-primary/20 text-primary"
-            : "bg-secondary/20 text-secondary"
-            }`}
+          className={`mt-1 hidden md:flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-semibold ${
+            sender === "user"
+              ? "bg-primary/20 text-primary"
+              : "bg-secondary/20 text-secondary"
+          }`}
         >
           {sender === "user" ? (
             <span className="material-symbols-outlined text-[24px]">
@@ -169,12 +202,15 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
 
         {/* Message Bubble */}
         <div
-          className={`glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 text-[15px] md:text-base flex flex-col ${sender === "user"
-            ? "bg-primary/20 text-foreground items-end rounded-tr-sm"
-            : "text-foreground items-start overflow-x-auto rounded-tl-sm premium-shadow"
-            }`}
+          className={`glass rounded-[20px] md:rounded-3xl px-4 md:px-5 py-3 md:py-4 text-[15px] md:text-base flex flex-col ${
+            sender === "user"
+              ? "bg-primary/20 text-foreground items-end rounded-tr-sm"
+              : "text-foreground items-start overflow-x-auto rounded-tl-sm premium-shadow"
+          }`}
         >
-          <p className={`mb-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 ${sender === "user" ? "text-right" : "text-left"}`}>
+          <p
+            className={`mb-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 ${sender === "user" ? "text-right" : "text-left"}`}
+          >
             {sender === "user" ? "You" : "Zyricon AI"}
           </p>
 
@@ -191,7 +227,9 @@ const MessageBubble = ({ message, sender = "user", isLoading = false, isNewReply
               ></span>
             </div>
           ) : sender === "user" ? (
-            <p className="leading-relaxed md:leading-7 break-words whitespace-pre-wrap">{displayedText}</p>
+            <p className="leading-relaxed md:leading-7 break-words whitespace-pre-wrap">
+              {displayedText}
+            </p>
           ) : (
             <div
               className="markdown-content leading-relaxed md:leading-7 max-w-full break-words relative overflow-x-hidden"

@@ -1,7 +1,10 @@
 import axios from "axios";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://perplexity-project-zac5.onrender.com/api";
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/chats",
+  baseURL: `${API_BASE_URL}/chats`,
   withCredentials: true,
 });
 
@@ -27,13 +30,10 @@ export const sendImageMessage = async (formData) => {
   try {
     // Note: the backend uses /api/images/chat, but `api` baseURL is /api/chats
     // Axios will automatically set the multipart/form-data boundary.
-    const response = await axios.post(
-      "http://localhost:3000/api/images/chat",
-      formData,
-      {
-        withCredentials: true,
-      },
-    );
+    const imageApiUrl = `${API_BASE_URL}/images/chat`;
+    const response = await axios.post(imageApiUrl, formData, {
+      withCredentials: true,
+    });
     return response.data;
   } catch (error) {
     const responseData = error.response?.data;

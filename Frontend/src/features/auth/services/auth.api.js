@@ -1,8 +1,11 @@
 import axios from "axios";
 import { store } from "../../../app/app.store";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://perplexity-project-zac5.onrender.com/api";
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/auth",
+  baseURL: `${API_BASE_URL}/auth`,
   withCredentials: true,
 });
 
