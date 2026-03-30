@@ -267,13 +267,15 @@ function Dashboard() {
       <div className="flex flex-col flex-1 min-h-0 w-full transition-all duration-300">
         {/* Top Header for Chat Interface */}
         <header className="h-14 md:h-11 flex items-center px-4 md:px-4 z-40 bg-background/80 backdrop-blur-xl shrink-0 gap-3 md:gap-0">
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - Toggle Sidebar */}
           <button
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => setSidebarOpen((prev) => !prev)}
             className="md:hidden flex items-center justify-center p-2 -ml-2 hover:bg-surface rounded-lg transition text-foreground"
-            title="Open sidebar"
+            title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
           >
-            <span className="material-symbols-outlined">menu</span>
+            <span className="material-symbols-outlined">
+              {sidebarOpen ? "close" : "menu"}
+            </span>
           </button>
 
           {/* Chat Title Container - WebCore AI Always Visible */}

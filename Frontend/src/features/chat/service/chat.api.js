@@ -1,4 +1,5 @@
 import axios from "axios";
+import { handleApiRequest } from "../../../services/backendHealth.service";
 
 const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
 const ensureApiPath = (baseUrl) => {
@@ -15,67 +16,46 @@ const api = axios.create({
 });
 
 export const createChat = async ({ title = "New Chat" } = {}) => {
-  try {
+  return handleApiRequest(async () => {
     const response = await api.post("/create", { title });
     return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : new Error("Network error");
-  }
+  });
 };
 
 export const sendMessage = async ({ message, chatId, fileId = null }) => {
-  try {
+  return handleApiRequest(async () => {
     const response = await api.post("/message", { chatId, message, fileId });
     return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : new Error("Network error");
-  }
+  });
 };
 
 export const sendImageMessage = async (formData) => {
-  try {
-    // Note: the backend uses /api/images/chat, but `api` baseURL is /api/chats
-    // Axios will automatically set the multipart/form-data boundary.
+  return handleApiRequest(async () => {
     const imageApiUrl = `${API_BASE_URL}/images/chat`;
     const response = await axios.post(imageApiUrl, formData, {
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
-    const responseData = error.response?.data;
-    if (responseData?.message) {
-      throw new Error(responseData.message);
-    }
-    if (typeof responseData === "string") {
-      throw new Error(responseData);
-    }
-    throw new Error("Network error");
-  }
+  });
 };
 
 export const getChats = async () => {
-  try {
+  return handleApiRequest(async () => {
     const response = await api.get("/chats");
     return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : new Error("Network error");
-  }
+  });
 };
 
 export const getMessages = async (chatId) => {
-  try {
+  return handleApiRequest(async () => {
     const response = await api.get(`/messages/${chatId}`);
     return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : new Error("Network error");
-  }
+  });
 };
 
 export const deleteChat = async ({ chatId }) => {
-  try {
+  return handleApiRequest(async () => {
     const response = await api.delete(`/chat/${chatId}`);
     return response.data;
-  } catch (error) {
-    throw error.response ? error.response.data : new Error("Network error");
-  }
+  });
 };

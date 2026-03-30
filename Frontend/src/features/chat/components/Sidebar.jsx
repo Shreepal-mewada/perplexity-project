@@ -62,7 +62,7 @@ const Sidebar = ({
                 <img
                   src="/spider logo per.jpg"
                   alt="App Icon"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-full"
                 />
                 {isCollapsed && (
                   <div className="absolute left-full ml-3 px-3 py-1.5 bg-surface border border-border/50 text-foreground text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-xl z-50 whitespace-nowrap pointer-events-none translate-y-1 group-hover:translate-y-0">

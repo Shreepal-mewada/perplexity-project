@@ -40,7 +40,7 @@ const Navbar = () => {
             }}
             className="flex items-center gap-1.5 sm:gap-2"
           >
-            <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-md sm:rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center">
               <img
                 className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 object-cover rounded-full"
                 src="/public/spider logo per.jpg"

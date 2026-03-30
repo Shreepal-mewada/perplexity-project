@@ -5,6 +5,7 @@ import { useAuth } from "../features/auth/hooks/useAuth";
 import { AppLoadingSkeleton } from "../components/ui/app-loading-skeleton";
 import { useSelector, useDispatch } from "react-redux";
 import { resetChatState } from "../features/chat/chat.slice";
+import BackendStatusPopup from "../components/BackendStatusPopup";
 
 function App() {
   const { handleRefresh, handleGetme } = useAuth();
@@ -42,7 +43,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <>
+        {" "}
+        <BackendStatusPopup />
+        <AppRoutes />
+      </>
     </BrowserRouter>
   );
 }

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { handleApiRequest } from "../../../services/backendHealth.service";
 
 const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
 const ensureApiPath = (baseUrl) => {
@@ -26,21 +27,19 @@ export const uploadFile = async (file, chatId, onProgress) => {
   formData.append("file", file);
   formData.append("chatId", chatId);
 
-  try {
+  return handleApiRequest(async () => {
     const response = await fileApi.post("/upload", formData, {
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
           const percent = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total,
+            (progressEvent.loaded * 100) / progressEvent.total
           );
           onProgress(percent);
         }
       },
     });
     return response.data;
-  } catch (error) {
-    throw error.response?.data || new Error("File upload failed");
-  }
+  });
 };
 
 /**
@@ -48,10 +47,8 @@ export const uploadFile = async (file, chatId, onProgress) => {
  * @param {string} fileId
  */
 export const removeFile = async (fileId) => {
-  try {
+  return handleApiRequest(async () => {
     const response = await fileApi.delete(`/${fileId}`);
     return response.data;
-  } catch (error) {
-    throw error.response?.data || new Error("File removal failed");
-  }
+  });
 };
