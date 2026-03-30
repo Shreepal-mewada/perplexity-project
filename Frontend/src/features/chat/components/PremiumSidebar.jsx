@@ -12,8 +12,9 @@ const PremiumSidebar = ({
     <>
       {/* Sidebar */}
       <aside
-        className={`h-screen fixed left-0 top-0 bg-background flex flex-col py-6 px-4 z-50 border-r border-border transition-all duration-300 ${isCollapsed ? "w-[4.5rem]" : "w-[15rem]"
-          } md:relative`}
+        className={`h-screen fixed left-0 top-0 bg-background flex flex-col py-6 px-4 z-50 border-r border-border transition-all duration-300 ${
+          isCollapsed ? "w-[4.5rem]" : "w-[15rem]"
+        } md:relative`}
         id="sidebar"
       >
         {/* Brand Header */}
@@ -26,7 +27,7 @@ const PremiumSidebar = ({
           {!isCollapsed && (
             <div className="truncate">
               <h1 className="text-xl font-bold tracking-tighter text-foreground font-display">
-                Zyricon AI
+                WebCore AI
               </h1>
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">
                 Premium Assistant

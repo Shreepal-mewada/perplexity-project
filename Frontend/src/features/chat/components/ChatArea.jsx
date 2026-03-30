@@ -29,8 +29,7 @@ const ChatArea = ({
             <div className="mx-auto max-w-3xl text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-primary shadow-lg shadow-primary/20">
                 <span className="material-symbols-outlined text-5xl">
-
-                  Zyricon
+                  WebCore
                 </span>
               </div>
               <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground font-display text-gray-300">
@@ -38,7 +37,7 @@ const ChatArea = ({
               </h2>
               <p className="mx-auto mt-2 max-w-xl text-xs md:text-sm leading-5 md:leading-6 text-muted-foreground">
                 Get instant answers, create content, and explore ideas with
-                Zyricon AI
+                WebCore AI
               </p>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
                 <button className="inline-flex items-center gap-1.5 rounded-full glass px-2 md:px-3 py-1.5 text-xs md:text-sm text-foreground transition hover:border-primary/50 hover:bg-primary/10 hover:text-primary">

@@ -1,4 +1,3 @@
-
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AIMessage, HumanMessage, SystemMessage } from "langchain";
 import { ChatMistralAI } from "@langchain/mistralai";
@@ -41,7 +40,7 @@ export function buildLLMContext(memoryContext) {
       .map((m) => `- [${m.projectKey}] ${m.content}`)
       .join("\n");
     contextParts.push(
-      `[LONG-TERM USER FACTS]\nThese are durable facts about the user's preferences, projects, and stack:\n${facts}`,
+      `[LONG-TERM USER FACTS]\nThese are durable facts about the user's preferences, projects, and stack:\n${facts}`
     );
   }
 
@@ -50,7 +49,11 @@ export function buildLLMContext(memoryContext) {
     const topics = sm.activeTopics?.join(", ");
     const uq = sm.unresolvedQuestions?.join(", ");
     contextParts.push(
-      `[CURRENT SHORT-TERM CHAT CONTEXT]\nActive Topics: ${topics || "none"}\nUnresolved Questions: ${uq || "none"}\nRecent Conversation Summary: ${sm.recentSummary || "This is the start of the conversation."}`,
+      `[CURRENT SHORT-TERM CHAT CONTEXT]\nActive Topics: ${
+        topics || "none"
+      }\nUnresolved Questions: ${uq || "none"}\nRecent Conversation Summary: ${
+        sm.recentSummary || "This is the start of the conversation."
+      }`
     );
   }
 
@@ -81,9 +84,13 @@ export async function generateResponse(message, memoryContext = null) {
 
     // 🔥 UPDATED SYSTEM PROMPT (MAIN FIX)
     const systemPrompt = new SystemMessage(
-      `You are Zyricon AI, a highly intelligent and professional AI assistant similar to ChatGPT.
+      `You are WebCore AI, a highly intelligent and professional AI assistant similar to ChatGPT.
 
-${contextBlock ? `\n=========================================\nMEMORY CONTEXT AVAILABLE:\n${contextBlock}\n=========================================\n` : ""}
+${
+  contextBlock
+    ? `\n=========================================\nMEMORY CONTEXT AVAILABLE:\n${contextBlock}\n=========================================\n`
+    : ""
+}
 
 RESPONSE STYLE:
 - Always provide detailed, well-structured answers
@@ -110,7 +117,7 @@ INTERNET SEARCH:
 If the user asks about current events, recent news, real-time data, or time-sensitive information, respond with:
 [SEARCH: your search query here]
 
-After search results are provided, give a structured, detailed answer based on them.`,
+After search results are provided, give a structured, detailed answer based on them.`
     );
 
     let allMessages = [systemPrompt, ...conversationHistory];
@@ -134,8 +141,8 @@ After search results are provided, give a structured, detailed answer based on t
         allMessages.push(response);
         allMessages.push(
           new HumanMessage(
-            `Here are the search results for "${searchQuery}":\n\n${searchResult}\n\nProvide a detailed, structured answer based on these results.`,
-          ),
+            `Here are the search results for "${searchQuery}":\n\n${searchResult}\n\nProvide a detailed, structured answer based on these results.`
+          )
         );
 
         response = await getGeminiModel().invoke(allMessages);
@@ -193,12 +200,17 @@ export async function generateChatTitle(message) {
  * @param {string} fileName        — for attribution in system prompt
  * @param {object} memoryContext   — existing memory context (unchanged)
  */
-export async function generateRagResponse(question, documentContext, fileName, memoryContext = null) {
+export async function generateRagResponse(
+  question,
+  documentContext,
+  fileName,
+  memoryContext = null
+) {
   try {
     const contextBlock = memoryContext ? buildLLMContext(memoryContext) : "";
 
     const ragSystemPrompt = new SystemMessage(
-      `You are Zyricon AI, a highly intelligent document analyst.
+      `You are WebCore AI, a highly intelligent document analyst.
 
 The user has uploaded a document named "${fileName}". Answer ONLY based on the document excerpts provided below.
 Do NOT hallucinate or add information not present in these excerpts.
@@ -224,7 +236,8 @@ RESPONSE STYLE:
     return await extractText(response);
   } catch (error) {
     console.error("RAG response generation error:", error.message);
-    throw new Error(`Failed to generate document-based response: ${error.message}`);
+    throw new Error(
+      `Failed to generate document-based response: ${error.message}`
+    );
   }
 }
-

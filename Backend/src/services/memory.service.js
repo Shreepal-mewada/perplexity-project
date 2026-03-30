@@ -18,7 +18,10 @@ const getMemoryLLM = () => {
 export async function processNewMessages(chatId, userId) {
   try {
     // 1. Fetch or Initialize ChatMemory with ownership verification
-    let chatMemory = await chatMemoryModel.findOne({ chat: chatId, user: userId });
+    let chatMemory = await chatMemoryModel.findOne({
+      chat: chatId,
+      user: userId,
+    });
     if (!chatMemory) {
       chatMemory = await chatMemoryModel.create({ chat: chatId, user: userId });
     }
@@ -26,13 +29,17 @@ export async function processNewMessages(chatId, userId) {
     // 2. Fetch unprocessed messages
     const query = { chat: chatId };
     if (chatMemory.lastProcessedMessage) {
-      const lastProcessed = await messageModel.findById(chatMemory.lastProcessedMessage);
+      const lastProcessed = await messageModel.findById(
+        chatMemory.lastProcessedMessage
+      );
       if (lastProcessed) {
         query.createdAt = { $gt: lastProcessed.createdAt };
       }
     }
 
-    const unprocessedMessages = await messageModel.find(query).sort({ createdAt: 1 });
+    const unprocessedMessages = await messageModel
+      .find(query)
+      .sort({ createdAt: 1 });
     if (unprocessedMessages.length === 0) return;
 
     const messagesText = unprocessedMessages
@@ -40,11 +47,16 @@ export async function processNewMessages(chatId, userId) {
       .join("\n");
 
     // 3. Fetch existing UserMemories for project inference and replacement lookup
-    const existingMemories = await userMemoryModel.find({ user: userId, status: "active" }).lean();
+    const existingMemories = await userMemoryModel
+      .find({ user: userId, status: "active" })
+      .lean();
 
     // Create a compact list of existing long-term memories for the LLM to understand what already exists
     const existingMemoryGlossary = existingMemories
-      .map(m => `[ID: ${m._id}] [Project: ${m.projectKey}] [Confidence: ${m.confidenceScore}] ${m.content}`)
+      .map(
+        (m) =>
+          `[ID: ${m._id}] [Project: ${m.projectKey}] [Confidence: ${m.confidenceScore}] ${m.content}`
+      )
       .join("\n");
 
     // 4. Construct prompt for Classification Pipeline
@@ -95,21 +107,32 @@ RULES:
 - projectKey logic: Infer the projectKey carefully. If multiple projects exist, keep them separate. If none, use 'general'.
 `);
 
-    const userPrompt = new HumanMessage(`Here are the unprocessed messages:\n\n${messagesText}`);
+    const userPrompt = new HumanMessage(
+      `Here are the unprocessed messages:\n\n${messagesText}`
+    );
 
     // Call Gemini
     const llm = getMemoryLLM();
     const response = await llm.invoke([systemPrompt, userPrompt]);
-    let responseText = typeof response.content === "string" ? response.content : response.text;
+    let responseText =
+      typeof response.content === "string" ? response.content : response.text;
 
     // Clean markdown if present
-    responseText = responseText.replace(/^```json/g, "").replace(/```$/g, "").trim();
+    responseText = responseText
+      .replace(/^```json/g, "")
+      .replace(/```$/g, "")
+      .trim();
 
     let analysis;
     try {
       analysis = JSON.parse(responseText);
     } catch (err) {
-      console.error("Failed to parse LLM memory analysis JSON:", err, "Response was:", responseText);
+      console.error(
+        "Failed to parse LLM memory analysis JSON:",
+        err,
+        "Response was:",
+        responseText
+      );
       return;
     }
 
@@ -119,10 +142,13 @@ RULES:
     chatMemory.recentSummary = short.recentSummary || chatMemory.recentSummary;
     chatMemory.keyPoints = short.keyPoints || chatMemory.keyPoints;
     chatMemory.decisions = short.decisions || chatMemory.decisions;
-    chatMemory.unresolvedQuestions = short.unresolvedQuestions || chatMemory.unresolvedQuestions;
+    chatMemory.unresolvedQuestions =
+      short.unresolvedQuestions || chatMemory.unresolvedQuestions;
     chatMemory.activeTopics = short.activeTopics || chatMemory.activeTopics;
-    chatMemory.importantEntities = short.importantEntities || chatMemory.importantEntities;
-    chatMemory.lastProcessedMessage = unprocessedMessages[unprocessedMessages.length - 1]._id;
+    chatMemory.importantEntities =
+      short.importantEntities || chatMemory.importantEntities;
+    chatMemory.lastProcessedMessage =
+      unprocessedMessages[unprocessedMessages.length - 1]._id;
     chatMemory.summaryVersion += 1;
     chatMemory.lastSummarizedAt = new Date();
     await chatMemory.save();
@@ -144,13 +170,15 @@ RULES:
           importanceScore: action.importanceScore || 5,
           confidenceScore: action.confidenceScore || 0.8,
           status: "active",
-          sourceChat: chatId
+          sourceChat: chatId,
         });
       }
 
       if (action.action === "LONG_TERM_UPDATE" && action.replacedMemoryId) {
         // Mark old as replaced
-        await userMemoryModel.findByIdAndUpdate(action.replacedMemoryId, { status: "replaced" });
+        await userMemoryModel.findByIdAndUpdate(action.replacedMemoryId, {
+          status: "replaced",
+        });
 
         // Add new
         await userMemoryModel.create({
@@ -162,11 +190,10 @@ RULES:
           importanceScore: action.importanceScore || 5,
           confidenceScore: action.confidenceScore || 0.9,
           status: "active",
-          sourceChat: chatId
+          sourceChat: chatId,
         });
       }
     }
-
   } catch (error) {
     console.error("Error in processNewMessages async pipeline:", error);
   }
@@ -175,7 +202,11 @@ RULES:
 /**
  * Multi-factor relevance scoring framework to retrieve top context.
  */
-export async function getRelevantMemories(userId, currentMessageText, activeTopics = []) {
+export async function getRelevantMemories(
+  userId,
+  currentMessageText,
+  activeTopics = []
+) {
   try {
     // 1. Fetch Cap: Top 50 by text match (assuming text index exists on content/tags)
     // If MongoDB text index is too strict or not setup, we fallback to regex or all active memories.
@@ -183,22 +214,33 @@ export async function getRelevantMemories(userId, currentMessageText, activeTopi
     let candidates = [];
 
     // We try $text search first if there are actual words in the query
-    const words = currentMessageText.split(/\s+/).filter(w => w.length > 3);
+    const words = currentMessageText.split(/\s+/).filter((w) => w.length > 3);
     if (words.length > 0) {
       try {
-        candidates = await userMemoryModel.find(
-          { user: userId, status: "active", $text: { $search: currentMessageText } },
-          { score: { $meta: "textScore" } }
-        )
+        candidates = await userMemoryModel
+          .find(
+            {
+              user: userId,
+              status: "active",
+              $text: { $search: currentMessageText },
+            },
+            { score: { $meta: "textScore" } }
+          )
           .sort({ score: { $meta: "textScore" } })
           .limit(50)
           .lean();
       } catch (e) {
         // If text index is not created yet, fallback to generic fetch
-        candidates = await userMemoryModel.find({ user: userId, status: "active" }).limit(100).lean();
+        candidates = await userMemoryModel
+          .find({ user: userId, status: "active" })
+          .limit(100)
+          .lean();
       }
     } else {
-      candidates = await userMemoryModel.find({ user: userId, status: "active" }).limit(100).lean();
+      candidates = await userMemoryModel
+        .find({ user: userId, status: "active" })
+        .limit(100)
+        .lean();
     }
 
     if (candidates.length === 0) return [];
@@ -206,7 +248,7 @@ export async function getRelevantMemories(userId, currentMessageText, activeTopi
     const queryLower = currentMessageText.toLowerCase();
 
     // 2. Custom Ranking Algorithm
-    const scoredMemories = candidates.map(mem => {
+    const scoredMemories = candidates.map((mem) => {
       let score = 0;
       const memContent = mem.content.toLowerCase();
 
@@ -220,16 +262,23 @@ export async function getRelevantMemories(userId, currentMessageText, activeTopi
       }
 
       // B. Project/Topic match boost
-      if (activeTopics.some(topic => topic.toLowerCase() === mem.projectKey?.toLowerCase())) {
+      if (
+        activeTopics.some(
+          (topic) => topic.toLowerCase() === mem.projectKey?.toLowerCase()
+        )
+      ) {
         score += 5; // Major boost if matching current active topic/project
       }
 
       // C. Importance & Confidence multipliers
-      const baseValue = (mem.importanceScore || 5) * (mem.confidenceScore || 1.0);
-      score += (baseValue * 0.5);
+      const baseValue =
+        (mem.importanceScore || 5) * (mem.confidenceScore || 1.0);
+      score += baseValue * 0.5;
 
       // D. Recency boost (last accessed within 24 hours gets a slight bump)
-      const daysSinceAccess = (Date.now() - new Date(mem.lastAccessedAt || mem.createdAt).getTime()) / (1000 * 3600 * 24);
+      const daysSinceAccess =
+        (Date.now() - new Date(mem.lastAccessedAt || mem.createdAt).getTime()) /
+        (1000 * 3600 * 24);
       if (daysSinceAccess < 1) {
         score += 2;
       } else if (daysSinceAccess < 7) {
@@ -245,8 +294,13 @@ export async function getRelevantMemories(userId, currentMessageText, activeTopi
 
     // 4. Update lastAccessedAt in background
     if (topMemories.length > 0) {
-      const ids = topMemories.map(m => m._id);
-      userMemoryModel.updateMany({ _id: { $in: ids } }, { $set: { lastAccessedAt: new Date() } }).exec();
+      const ids = topMemories.map((m) => m._id);
+      userMemoryModel
+        .updateMany(
+          { _id: { $in: ids } },
+          { $set: { lastAccessedAt: new Date() } }
+        )
+        .exec();
     }
 
     return topMemories;

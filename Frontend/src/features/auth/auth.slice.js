@@ -7,14 +7,14 @@ const authSlice = createSlice({
     user: null,
     error: null,
     accessToken: null,
-    message : null,
+    message: null,
   },
   reducers: {
     setLoading(state, action) {
       state.loading = action.payload;
     },
     setUser(state, action) {
-      state.user = action.payload;    
+      state.user = action.payload;
     },
     setError(state, action) {
       state.error = action.payload;
@@ -22,7 +22,7 @@ const authSlice = createSlice({
     setAccessToken(state, action) {
       state.accessToken = action.payload;
     },
-      setMessage(state, action) {
+    setMessage(state, action) {
       state.message = action.payload;
     },
     // 🔒 NEW: Action to clear all auth state on logout
@@ -32,10 +32,16 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.message = null;
       state.loading = false;
-    }
+    },
   },
-}); 
+});
 
-export const { setUser, setLoading, setError, setAccessToken, setMessage, clearAuthState } = authSlice.actions;
+export const {
+  setUser,
+  setLoading,
+  setError,
+  setAccessToken,
+  setMessage,
+  clearAuthState,
+} = authSlice.actions;
 export default authSlice.reducer;
-

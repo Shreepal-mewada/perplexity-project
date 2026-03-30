@@ -13,7 +13,7 @@ function Dashboard() {
   const chat = useChat();
   const dispatch = useDispatch();
   const { chats, currentChatId, isLoading } = useSelector(
-    (state) => state.chat,
+    (state) => state.chat
   );
 
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar open state
@@ -79,7 +79,11 @@ function Dashboard() {
     return Object.values(chats)
       .map((chat) => {
         const date = new Date(chat.lastUpdated);
-        const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+        const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(
+          date.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}/${date.getFullYear()}`;
         return {
           ...chat,
           time: formattedDate,
@@ -97,7 +101,7 @@ function Dashboard() {
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chatsArray;
     return chatsArray.filter((item) =>
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [chatsArray, searchQuery]);
 
@@ -170,7 +174,7 @@ function Dashboard() {
             activeChat={activeChat}
             onSelectChat={handleSelectChat}
             isCollapsed={false}
-            onToggleSidebar={() => { }}
+            onToggleSidebar={() => {}}
           />
         </div>
 
@@ -272,9 +276,9 @@ function Dashboard() {
             <span className="material-symbols-outlined">menu</span>
           </button>
 
-          {/* Chat Title Container - Zyricon AI Always Visible */}
+          {/* Chat Title Container - WebCore AI Always Visible */}
           <h2 className="text-base md:text-sm font-bold text-foreground truncate">
-            Zyricon AI
+            WebCore AI
           </h2>
         </header>
 

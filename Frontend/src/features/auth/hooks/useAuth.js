@@ -30,13 +30,13 @@ export function useAuth() {
         return user;
       } catch (error) {
         dispatch(
-          setError(error.response?.data?.message || "Registration failed"),
+          setError(error.response?.data?.message || "Registration failed")
         );
       } finally {
         dispatch(setLoading(false));
       }
     },
-    [dispatch],
+    [dispatch]
   );
 
   const handleLogin = useCallback(
@@ -52,7 +52,7 @@ export function useAuth() {
         dispatch(setLoading(false));
       }
     },
-    [dispatch],
+    [dispatch]
   );
 
   const handleRefresh = useCallback(async () => {
@@ -79,8 +79,8 @@ export function useAuth() {
     } catch (error) {
       dispatch(
         setError(
-          error.response?.data?.message || "Failed to fetch user details",
-        ),
+          error.response?.data?.message || "Failed to fetch user details"
+        )
       );
     } finally {
       dispatch(setLoading(false));
@@ -101,5 +101,11 @@ export function useAuth() {
     }
   }, [dispatch]);
 
-  return { handleRegister, handleLogin, handleRefresh, handleGetme, handleLogout };
+  return {
+    handleRegister,
+    handleLogin,
+    handleRefresh,
+    handleGetme,
+    handleLogout,
+  };
 }

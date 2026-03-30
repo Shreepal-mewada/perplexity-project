@@ -11,7 +11,10 @@ export const authenticate = (req, res, next) => {
 
   console.log("[Auth Middleware] Cookie token exists:", !!cookieToken);
   console.log("[Auth Middleware] Bearer token exists:", !!bearerToken);
-  console.log("[Auth Middleware] Using token from:", cookieToken ? "cookie" : "header");
+  console.log(
+    "[Auth Middleware] Using token from:",
+    cookieToken ? "cookie" : "header"
+  );
 
   if (!token) {
     return res.status(401).json({

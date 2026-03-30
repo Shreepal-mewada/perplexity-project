@@ -75,24 +75,36 @@ const Landing = () => {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-background/40 to-background/90 z-0 pointer-events-none"></div>
 
           {/* Hero Content */}
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-12 py-20 mt-16 flex flex-col items-center justify-center text-center">
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-12 py-12 md:py-20 mt-8 md:mt-16 flex flex-col items-center justify-center text-center">
             <div
               className="max-w-4xl flex flex-col items-center w-full"
-              style={{ animation: 'fadeSlideUp 1s ease-out forwards' }}
+              style={{ animation: "fadeSlideUp 1s ease-out forwards" }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm text-primary text-[11px] md:text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse-glow"></span>
-                Introducing Zyricon AI 4.0
+              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-primary/30 bg-primary/10 backdrop-blur-sm text-primary text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-4 sm:mb-6 shadow-lg">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary animate-pulse-glow"></span>
+                Introducing WebCore AI 4.0
               </div>
 
-              <h2 className="text-gray-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold font-display text-foreground tracking-tight leading-[1.1] mb-6 drop-shadow-lg animate-fade-in-up">
-                <DecryptedText text="Built for" animateOn="view" speed={70} maxIterations={10} /> <br className="hidden md:block" />
+              <h2 className="text-gray-400 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display text-foreground tracking-tight leading-[1.15] sm:leading-[1.1] mb-4 sm:mb-6 drop-shadow-lg animate-fade-in-up">
+                <DecryptedText
+                  text="Built for"
+                  animateOn="view"
+                  speed={70}
+                  maxIterations={10}
+                />{" "}
+                <br className="hidden md:block" />
                 <span className="text-gradient">
-                  <DecryptedText text="Curious Minds" animateOn="view" speed={70} maxIterations={20} revealDirection="center" />
+                  <DecryptedText
+                    text="Curious Minds"
+                    animateOn="view"
+                    speed={70}
+                    maxIterations={20}
+                    revealDirection="center"
+                  />
                 </span>
               </h2>
 
-              <p className="text-base md:text-lg text-white/80 max-w-2xl mb-10 leading-relaxed font-medium drop-shadow-md">
+              <p className="text-sm sm:text-base md:text-lg text-white/80 max-w-xl sm:max-w-2xl mb-6 sm:mb-8 md:mb-10 leading-relaxed sm:leading-relaxed font-medium drop-shadow-md px-2">
                 <DecryptedText
                   text="Ask anything, explore deeper, and get accurate, structured answers powered by advanced AI."
                   animateOn="view"
@@ -102,14 +114,23 @@ const Landing = () => {
                 />
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full mt-4">
-                <ButtonWithIcon asChild className="w-full sm:w-auto bg-primary text-primary-foreground shadow-xl glow-blue-sm h-12">
-                  <Link to="/register" className="flex items-center justify-center">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full mt-4 sm:mt-6">
+                <ButtonWithIcon
+                  asChild
+                  className="w-2/3 sm:w-auto bg-primary text-primary-foreground shadow-xl glow-blue-sm h-12 sm:h-11 px-6"
+                >
+                  <Link
+                    to="/register"
+                    className="flex items-center justify-center text-sm sm:text-base "
+                  >
                     Get Started for Free
                   </Link>
                 </ButtonWithIcon>
 
-                <Link to="/loginf" className="w-full sm:w-auto bg-[#0F1013] hover:bg-surface text-white px-8 h-12 rounded-full flex items-center justify-center transition-colors font-medium border border-border" >
+                <Link
+                  to="/loginf"
+                  className="w-2/3 sm:w-auto bg-[#0F1013] hover:bg-surface text-white px-6 sm:px-8 h-12 sm:h-11 rounded-full flex items-center justify-center transition-colors font-medium border border-border text-sm sm:text-base"
+                >
                   Explore Features
                 </Link>
               </div>
@@ -136,7 +157,14 @@ const Landing = () => {
         {/* Built strict layout boundaries for ScrollStack and next sections */}
         <div className="w-full relative py-12 md:py-24 mb-16 md:mb-32">
           {/* We pass a conditionally smaller itemDistance strictly for mobile cards using window innerWidth check if desired, but padding fixes 99% of it */}
-          <ScrollStack useWindowScroll={true} itemDistance={typeof window !== 'undefined' && window.innerWidth < 768 ? 40 : 100}>
+          <ScrollStack
+            useWindowScroll={true}
+            itemDistance={
+              typeof window !== "undefined" && window.innerWidth < 768
+                ? 40
+                : 100
+            }
+          >
             <ScrollStackItem itemClassName="glass-strong bg-background p-0 overflow-hidden">
               <FeaturesSection />
             </ScrollStackItem>

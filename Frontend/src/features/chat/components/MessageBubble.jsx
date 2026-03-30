@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import appIcon from "../../../assets/image.png";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./MessageBubble.css";
@@ -14,10 +13,10 @@ const MessageBubble = ({
   url,
 }) => {
   const [displayedText, setDisplayedText] = useState(
-    isNewReply && !isLoading && sender === "ai" ? "" : message,
+    isNewReply && !isLoading && sender === "ai" ? "" : message
   );
   const [isTyping, setIsTyping] = useState(
-    isNewReply && !isLoading && sender === "ai",
+    isNewReply && !isLoading && sender === "ai"
   );
 
   useEffect(() => {
@@ -35,7 +34,7 @@ const MessageBubble = ({
     const tickRateMs = 30; // ~33 fps
     const charsPerTick = Math.max(
       1,
-      Math.floor(message.length / (totalDurationMs / tickRateMs)),
+      Math.floor(message.length / (totalDurationMs / tickRateMs))
     );
 
     const intervalId = setInterval(() => {
@@ -68,8 +67,8 @@ const MessageBubble = ({
     const imageSrc = url?.startsWith("blob:")
       ? url
       : url
-        ? `${backendHost}${url}`
-        : null;
+      ? `${backendHost}${url}`
+      : null;
 
     return (
       <div className="flex w-full justify-end">
@@ -193,8 +192,8 @@ const MessageBubble = ({
             </span>
           ) : (
             <img
-              src={appIcon}
-              alt="Zyricon AI Logo"
+              src="/spider logo per.jpg"
+              alt="WebCore AI Logo"
               className="w-full h-full object-cover rounded-full"
             />
           )}
@@ -209,9 +208,11 @@ const MessageBubble = ({
           }`}
         >
           <p
-            className={`mb-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 ${sender === "user" ? "text-right" : "text-left"}`}
+            className={`mb-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60 ${
+              sender === "user" ? "text-right" : "text-left"
+            }`}
           >
-            {sender === "user" ? "You" : "Zyricon AI"}
+            {sender === "user" ? "You" : "WebCore AI"}
           </p>
 
           {isLoading ? (
