@@ -83,6 +83,14 @@ const chatSlice = createSlice({
     clearFileContext: (state) => {
       state.fileContext = null;
     },
+    // 🔒 NEW: Reset all chat state on logout
+    resetChatState: (state) => {
+      state.chats = {};
+      state.currentChatId = null;
+      state.isLoading = false;
+      state.error = null;
+      state.fileContext = null;
+    },
   },
 });
 
@@ -98,6 +106,7 @@ export const {
   removeChat,
   setFileContext,
   clearFileContext,
+  resetChatState,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

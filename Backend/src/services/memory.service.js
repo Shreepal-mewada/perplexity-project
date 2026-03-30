@@ -17,8 +17,8 @@ const getMemoryLLM = () => {
  */
 export async function processNewMessages(chatId, userId) {
   try {
-    // 1. Fetch or Initialize ChatMemory
-    let chatMemory = await chatMemoryModel.findOne({ chat: chatId });
+    // 1. Fetch or Initialize ChatMemory with ownership verification
+    let chatMemory = await chatMemoryModel.findOne({ chat: chatId, user: userId });
     if (!chatMemory) {
       chatMemory = await chatMemoryModel.create({ chat: chatId, user: userId });
     }

@@ -30,6 +30,11 @@ export async function sendMessage(req, res) {
     const { message, chatId, fileId } = req.body;
 
     const userId = req.user.id;
+    
+    // 🔒 Debug: Log authentication info
+    console.log("[sendMessage] Authenticated userId:", userId);
+    console.log("[sendMessage] Request body:", { chatId, fileId });
+
     let title = null,
       chat = null;
 
@@ -39,6 +44,18 @@ export async function sendMessage(req, res) {
         user: userId,
         title,
       });
+      console.log("[sendMessage] Created new chat:", chat._id, "for user:", userId);
+    } else {
+      // 🔒 SECURITY FIX: Verify the provided chatId belongs to the authenticated user
+      chat = await chatModel.findOne({ _id: chatId, user: userId });
+      if (!chat) {
+        console.warn("[sendMessage] Unauthorized access attempt! User:", userId, "tried to access chat:", chatId);
+        return res.status(403).json({
+          message: "Access denied. This chat does not belong to you.",
+          error: "Unauthorized access",
+        });
+      }
+      console.log("[sendMessage] Verified chat ownership for chat:", chatId);
     }
 
     const userMessage = await messageModel.create({
@@ -49,8 +66,8 @@ export async function sendMessage(req, res) {
 
     const activeChatId = chatId || chat._id;
 
-    // Fetch memory context
-    let chatMemory = await chatMemoryModel.findOne({ chat: activeChatId });
+    // Fetch memory context with user ownership verification
+    let chatMemory = await chatMemoryModel.findOne({ chat: activeChatId, user: userId });
     if (!chatMemory) {
       chatMemory = await chatMemoryModel.create({ chat: activeChatId, user: userId });
     }
@@ -69,6 +86,15 @@ export async function sendMessage(req, res) {
     // --- RAG Routing ---
     // Determine active fileId: from request body OR from the linked chat document
     const activeChatDoc = await chatModel.findById(activeChatId);
+    
+    // 🔒 SECURITY FIX: Verify chat ownership before accessing file context
+    if (!activeChatDoc || activeChatDoc.user.toString() !== userId.toString()) {
+      return res.status(403).json({
+        message: "Access denied. This chat does not belong to you.",
+        error: "Unauthorized access",
+      });
+    }
+    
     const activeFileId = fileId || activeChatDoc?.fileId || null;
 
     if (activeFileId) {
@@ -120,9 +146,16 @@ export async function sendMessage(req, res) {
 }
 
 export async function getChats(req, res) {
-  // const user = req.user
   const userId = req.user.id;
+  
+  // 🔒 Debug: Log the userId being used
+  console.log("[getChats] Authenticated userId:", userId, "Type:", typeof userId);
+  console.log("[getChats] Full req.user object:", JSON.stringify(req.user));
+  
   const chats = await chatModel.find({ user: userId });
+  
+  console.log(`[getChats] Found ${chats.length} chats for user ${userId}`);
+  console.log("[getChats] Chat user IDs:", chats.map(c => c.user.toString()));
 
   res.status(200).json({
     message: "Chats retrieved successfully",
@@ -162,7 +195,21 @@ export async function getMessages(req, res) {
 export async function deleteChat(req, res) {
   const { chatId } = req.params;
   const userId = req.user.id;
-  const chat = await chatModel.findOneAndDelete({
+  
+  // First verify ownership
+  const chat = await chatModel.findOne({
+    _id: chatId,
+    user: userId,
+  });
+  
+  if (!chat) {
+    return res.status(404).json({
+      message: "Chat not found",
+    });
+  }
+  
+  // Delete the chat (ownership already verified)
+  await chatModel.findOneAndDelete({
     _id: chatId,
     user: userId,
   });
@@ -170,12 +217,6 @@ export async function deleteChat(req, res) {
   await messageModel.deleteMany({
     chat: chatId,
   });
-
-  if (!chat) {
-    return res.status(404).json({
-      message: "Chat not found",
-    });
-  }
 
   res.status(200).json({
     message: "Chat deleted successfully",

@@ -24,11 +24,18 @@ const authSlice = createSlice({
     },
       setMessage(state, action) {
       state.message = action.payload;
+    },
+    // 🔒 NEW: Action to clear all auth state on logout
+    clearAuthState(state) {
+      state.user = null;
+      state.error = null;
+      state.accessToken = null;
+      state.message = null;
+      state.loading = false;
     }
-
   },
 }); 
 
-export const { setUser, setLoading, setError, setAccessToken, setMessage } = authSlice.actions;
+export const { setUser, setLoading, setError, setAccessToken, setMessage, clearAuthState } = authSlice.actions;
 export default authSlice.reducer;
 

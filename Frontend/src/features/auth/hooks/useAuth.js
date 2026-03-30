@@ -13,7 +13,9 @@ import {
   setError,
   setAccessToken,
   setMessage,
+  clearAuthState,
 } from "../auth.slice";
+import { resetChatState } from "../../chat/chat.slice";
 
 export function useAuth() {
   const dispatch = useDispatch();
@@ -92,8 +94,9 @@ export function useAuth() {
     } catch (error) {
       console.error("Logout API failed:", error);
     } finally {
-      dispatch(setUser(null));
-      dispatch(setAccessToken(null));
+      // 🔒 SECURITY FIX: Clear ALL state on logout to prevent data leakage
+      dispatch(clearAuthState());
+      dispatch(resetChatState());
       dispatch(setLoading(false));
     }
   }, [dispatch]);
