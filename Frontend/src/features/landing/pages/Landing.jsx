@@ -109,7 +109,7 @@ const Landing = () => {
                   </Link>
                 </ButtonWithIcon>
 
-                <Link to="#features" className="w-full sm:w-auto bg-[#0F1013] hover:bg-surface text-white px-8 h-12 rounded-full flex items-center justify-center transition-colors font-medium border border-border" >
+                <Link to="/loginf" className="w-full sm:w-auto bg-[#0F1013] hover:bg-surface text-white px-8 h-12 rounded-full flex items-center justify-center transition-colors font-medium border border-border" >
                   Explore Features
                 </Link>
               </div>

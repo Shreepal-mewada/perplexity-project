@@ -71,7 +71,7 @@ export function useAuth() {
     try {
       dispatch(setLoading(true));
       const user = await getMe();
-      if(user) {
+      if (user) {
         dispatch(setUser(user));
       }
     } catch (error) {

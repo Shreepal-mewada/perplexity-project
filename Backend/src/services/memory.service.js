@@ -28,7 +28,7 @@ export async function processNewMessages(chatId, userId) {
     if (chatMemory.lastProcessedMessage) {
       const lastProcessed = await messageModel.findById(chatMemory.lastProcessedMessage);
       if (lastProcessed) {
-         query.createdAt = { $gt: lastProcessed.createdAt };
+        query.createdAt = { $gt: lastProcessed.createdAt };
       }
     }
 
@@ -41,7 +41,7 @@ export async function processNewMessages(chatId, userId) {
 
     // 3. Fetch existing UserMemories for project inference and replacement lookup
     const existingMemories = await userMemoryModel.find({ user: userId, status: "active" }).lean();
-    
+
     // Create a compact list of existing long-term memories for the LLM to understand what already exists
     const existingMemoryGlossary = existingMemories
       .map(m => `[ID: ${m._id}] [Project: ${m.projectKey}] [Confidence: ${m.confidenceScore}] ${m.content}`)
@@ -101,10 +101,10 @@ RULES:
     const llm = getMemoryLLM();
     const response = await llm.invoke([systemPrompt, userPrompt]);
     let responseText = typeof response.content === "string" ? response.content : response.text;
-    
+
     // Clean markdown if present
     responseText = responseText.replace(/^```json/g, "").replace(/```$/g, "").trim();
-    
+
     let analysis;
     try {
       analysis = JSON.parse(responseText);
@@ -151,7 +151,7 @@ RULES:
       if (action.action === "LONG_TERM_UPDATE" && action.replacedMemoryId) {
         // Mark old as replaced
         await userMemoryModel.findByIdAndUpdate(action.replacedMemoryId, { status: "replaced" });
-        
+
         // Add new
         await userMemoryModel.create({
           user: userId,
@@ -181,7 +181,7 @@ export async function getRelevantMemories(userId, currentMessageText, activeTopi
     // If MongoDB text index is too strict or not setup, we fallback to regex or all active memories.
     // For production without a vector DB, pulling all active memories for a user is usually fine until 1000+ items.
     let candidates = [];
-    
+
     // We try $text search first if there are actual words in the query
     const words = currentMessageText.split(/\s+/).filter(w => w.length > 3);
     if (words.length > 0) {
@@ -190,26 +190,26 @@ export async function getRelevantMemories(userId, currentMessageText, activeTopi
           { user: userId, status: "active", $text: { $search: currentMessageText } },
           { score: { $meta: "textScore" } }
         )
-        .sort({ score: { $meta: "textScore" } })
-        .limit(50)
-        .lean();
+          .sort({ score: { $meta: "textScore" } })
+          .limit(50)
+          .lean();
       } catch (e) {
         // If text index is not created yet, fallback to generic fetch
         candidates = await userMemoryModel.find({ user: userId, status: "active" }).limit(100).lean();
       }
     } else {
-       candidates = await userMemoryModel.find({ user: userId, status: "active" }).limit(100).lean();
+      candidates = await userMemoryModel.find({ user: userId, status: "active" }).limit(100).lean();
     }
 
     if (candidates.length === 0) return [];
 
     const queryLower = currentMessageText.toLowerCase();
-    
+
     // 2. Custom Ranking Algorithm
     const scoredMemories = candidates.map(mem => {
       let score = 0;
       const memContent = mem.content.toLowerCase();
-      
+
       // A. Keyword/Tag overlap (Basic token match)
       const tags = mem.tags || [];
       for (const t of tags) {

@@ -38,8 +38,17 @@ const chatSlice = createSlice({
       }
     },
     addNewMessage: (state, action) => {
-      const { chatId, content, role, isNewReply, type, fileName, fileId, url } = action.payload;
-      state.chats[chatId].messages.push({ content, role, isNewReply, type, fileName, fileId, url });
+      const { chatId, content, role, isNewReply, type, fileName, fileId, url } =
+        action.payload;
+      state.chats[chatId].messages.push({
+        content,
+        role,
+        isNewReply,
+        type,
+        fileName,
+        fileId,
+        url,
+      });
     },
     addMessages: (state, action) => {
       const { chatId, messages } = action.payload;
@@ -92,4 +101,3 @@ export const {
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
-
