@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
-import logo from "../../../assets/spider_logo_2.png";
+import logo from "../../../../public/spider logo per.jpg";
 
 const ChatArea = ({
   messages = [],
