@@ -4,246 +4,189 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://perplexity-project-zac5.onrender.com/api";
 
-// Configuration
 const CONFIG = {
   HEALTH_ENDPOINT: `${API_BASE_URL}/health`,
-  RETRY_INTERVAL: 5000, // 5 seconds
-  SHOW_DELAY: 2000, // Show popup after 2 seconds of no response
-  MAX_RETRIES: 60, // Stop after 60 retries (5 minutes)
+  POLL_INTERVAL: 5000,
+  REQUEST_TIMEOUT: 3000,
 };
 
-// State
+// ── Module-level singleton state ──
 let isBackendDown = false;
-let retryInterval = null;
-let retryCount = 0;
+let pollTimer = null;
 let listeners = new Set();
-let showTimeout = null;
+let healthyResolvers = [];
 
-/**
- * Check if backend is available
- */
+// ── Helpers ──
+
+function isNetworkError(error) {
+  return (
+    error.code === "ERR_NETWORK" ||
+    error.code === "ECONNABORTED" ||
+    error.message?.includes("timeout") ||
+    error.message?.includes("Network Error") ||
+    !error.response
+  );
+}
+
+function notifyListeners(down) {
+  listeners.forEach((cb) => {
+    try {
+      cb(down);
+    } catch (e) {
+      console.error("[Backend Health] Listener error:", e);
+    }
+  });
+}
+
+// ── Health check ──
+
 export async function checkBackendHealth() {
   try {
+    console.log("[Backend Health] 🔍 Checking health endpoint...");
     const response = await axios.get(CONFIG.HEALTH_ENDPOINT, {
-      timeout: 3000, // 3 second timeout
-      withCredentials: false, // No auth needed for health check
+      timeout: CONFIG.REQUEST_TIMEOUT,
+      withCredentials: false,
     });
-    return response.status === 200;
+    const healthy = response.status >= 200 && response.status < 300;
+    console.log(
+      `[Backend Health] ${healthy ? "✅ Healthy" : "❌ Unhealthy"} (status: ${response.status})`
+    );
+    return healthy;
   } catch (error) {
+    console.log(
+      `[Backend Health] ❌ Health check failed: ${error.code || error.message}`
+    );
     return false;
   }
 }
 
-/**
- * Start polling backend health
- */
-function startHealthPolling() {
-  if (retryInterval) return; // Already polling
+// ── Polling ──
 
-  retryCount = 0;
-
-  retryInterval = setInterval(async () => {
-    retryCount++;
-
-    const isHealthy = await checkBackendHealth();
-
-    if (isHealthy) {
+function startPolling() {
+  if (pollTimer) {
+    console.log("[Backend Health] ⚠️ Polling already active, skipping");
+    return;
+  }
+  console.log("[Backend Health] 🔄 Starting health polling every 5s...");
+  pollTimer = setInterval(async () => {
+    const healthy = await checkBackendHealth();
+    if (healthy) {
       console.log("[Backend Health] ✅ Server is back online!");
-      stopHealthPolling();
-      setBackendStatus(false);
-
-      // Retry original request if there was one
-      if (window.pendingRetryRequest) {
-        const pendingRequest = window.pendingRetryRequest;
-        window.pendingRetryRequest = null;
-
-        try {
-          // Re-execute the pending request
-          const result = await pendingRequest();
-          console.log("[Backend Health] ✅ Pending request succeeded");
-          return result;
-        } catch (error) {
-          console.error("[Backend Health] ❌ Pending request failed:", error);
-        }
-      }
-    } else {
-      console.log(
-        `[Backend Health] ⏳ Still waiting... (Attempt ${retryCount}/${CONFIG.MAX_RETRIES})`
-      );
-
-      if (retryCount >= CONFIG.MAX_RETRIES) {
-        stopHealthPolling();
-        console.error("[Backend Health] ❌ Max retries reached");
-      }
+      recoverBackend();
     }
-  }, CONFIG.RETRY_INTERVAL);
-
-  console.log("[Backend Health] 🔄 Started health polling");
+  }, CONFIG.POLL_INTERVAL);
 }
 
-/**
- * Stop polling backend health
- */
-function stopHealthPolling() {
-  if (retryInterval) {
-    clearInterval(retryInterval);
-    retryInterval = null;
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
     console.log("[Backend Health] ⏹️ Stopped health polling");
   }
+}
 
-  if (showTimeout) {
-    clearTimeout(showTimeout);
-    showTimeout = null;
+// ── State transitions ──
+
+function markBackendDown() {
+  if (isBackendDown) return; // already down, no-op
+  isBackendDown = true;
+  console.log("[Backend Health] 🚨 Backend marked as DOWN");
+  notifyListeners(true);
+  startPolling();
+}
+
+function recoverBackend() {
+  stopPolling();
+  if (!isBackendDown) return; // already healthy, no-op
+  isBackendDown = false;
+  console.log("[Backend Health] ✅ Backend marked as HEALTHY");
+  notifyListeners(false);
+  // Unblock all waiting requests
+  const resolvers = healthyResolvers;
+  healthyResolvers = [];
+  resolvers.forEach((resolve) => resolve());
+}
+
+// ── Wait primitive ──
+
+function waitForHealthy() {
+  return new Promise((resolve) => {
+    if (!isBackendDown) {
+      resolve();
+      return;
+    }
+    healthyResolvers.push(resolve);
+  });
+}
+
+// ── Public API ──
+
+/**
+ * Wrap any API call with automatic downtime detection and recovery.
+ * On network error: marks backend down, shows popup, blocks until
+ * server recovers, then retries the original request once.
+ */
+export async function handleApiRequest(requestFn, _options = {}) {
+  try {
+    const result = await requestFn();
+    // If backend was down but recovered during this request
+    if (isBackendDown) {
+      recoverBackend();
+    }
+    return result;
+  } catch (error) {
+    // Non-network errors (401, 404, validation, etc.) pass through immediately
+    if (!isNetworkError(error)) {
+      throw error;
+    }
+
+    console.log(
+      `[Backend Health] 🚨 Network error detected: ${error.code || error.message}`
+    );
+
+    // Mark down, show popup, start polling
+    markBackendDown();
+
+    // Block until the health check confirms the server is back
+    console.log("[Backend Health] ⏳ Waiting for backend to recover...");
+    await waitForHealthy();
+    console.log("[Backend Health] 🔄 Retrying original request...");
+
+    // Retry the original request once
+    const result = await requestFn();
+
+    // Ensure we're marked healthy after successful retry
+    if (isBackendDown) {
+      recoverBackend();
+    }
+
+    return result;
   }
 }
 
-/**
- * Update backend status and notify listeners
- */
-function setBackendStatus(down) {
-  isBackendDown = down;
-  notifyListeners(down);
-}
-
-/**
- * Subscribe to backend status changes
- */
 export function subscribeToBackendStatus(callback) {
   listeners.add(callback);
-
-  // Return unsubscribe function
   return () => {
     listeners.delete(callback);
   };
 }
 
-/**
- * Notify all listeners of status change
- */
-function notifyListeners(down) {
-  listeners.forEach((callback) => {
-    try {
-      callback(down);
-    } catch (error) {
-      console.error("[Backend Health] Listener error:", error);
-    }
-  });
-}
-
-/**
- * Handle API request with automatic retry for backend downtime
- */
-export async function handleApiRequest(requestFn, options = {}) {
-  const {
-    showLoadingDelay = CONFIG.SHOW_DELAY,
-    enableRetry = true,
-    maxRetries = CONFIG.MAX_RETRIES,
-  } = options;
-
-  let showPopupTimeout = null;
-  let attemptCount = 0;
-
-  const executeWithRetry = async () => {
-    while (attemptCount < maxRetries) {
-      try {
-        // Execute the request
-        const result = await requestFn();
-
-        // Clear popup timeout if request succeeds quickly
-        if (showPopupTimeout) {
-          clearTimeout(showPopupTimeout);
-          showPopupTimeout = null;
-        }
-
-        // If we showed the popup, hide it now
-        if (isBackendDown) {
-          setBackendStatus(false);
-          stopHealthPolling();
-        }
-
-        return result;
-      } catch (error) {
-        attemptCount++;
-
-        // Check if it's a network/timeout error (backend likely down)
-        const isNetworkError =
-          error.code === "ECONNABORTED" ||
-          error.code === "ERR_NETWORK" ||
-          error.message?.includes("timeout") ||
-          error.message?.includes("network") ||
-          !error.response; // No response means server unreachable
-
-        if (!isNetworkError) {
-          // It's a different error (auth, validation, etc.) - throw immediately
-          throw error;
-        }
-
-        console.log(`[API Retry] Attempt ${attemptCount}/${maxRetries} failed`);
-
-        // Show popup after delay
-        if (!showPopupTimeout && !isBackendDown) {
-          showPopupTimeout = setTimeout(() => {
-            setBackendStatus(true);
-            startHealthPolling();
-
-            // Store the pending request for retry
-            window.pendingRetryRequest = requestFn;
-          }, showLoadingDelay);
-        }
-
-        // Wait before retry (unless it's the last attempt)
-        if (attemptCount < maxRetries) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, CONFIG.RETRY_INTERVAL)
-          );
-        }
-      }
-    }
-
-    // Max retries reached
-    throw new Error("Server unavailable after multiple attempts");
-  };
-
-  return executeWithRetry();
-}
-
-/**
- * Manually trigger backend health check
- */
-export async function manualHealthCheck() {
-  console.log("[Backend Health] 🔍 Manual health check...");
-  const isHealthy = await checkBackendHealth();
-
-  if (isHealthy && isBackendDown) {
-    setBackendStatus(false);
-    stopHealthPolling();
-  }
-
-  return isHealthy;
-}
-
-/**
- * Get current backend status
- */
 export function getBackendStatus() {
   return isBackendDown;
 }
 
-/**
- * Reset all state (useful for logout)
- */
 export function resetBackendHealth() {
-  stopHealthPolling();
-  setBackendStatus(false);
-  retryCount = 0;
-  window.pendingRetryRequest = null;
+  stopPolling();
+  isBackendDown = false;
+  healthyResolvers = [];
+  notifyListeners(false);
+  console.log("[Backend Health] 🔄 State reset");
 }
 
 export default {
   checkBackendHealth,
   handleApiRequest,
   subscribeToBackendStatus,
-  manualHealthCheck,
   getBackendStatus,
   resetBackendHealth,
   CONFIG,

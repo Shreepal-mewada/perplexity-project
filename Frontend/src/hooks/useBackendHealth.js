@@ -4,24 +4,15 @@ import {
   getBackendStatus,
 } from "../services/backendHealth.service";
 
-/**
- * React hook to track backend availability status
- */
 export function useBackendHealth() {
   const [isBackendDown, setIsBackendDown] = useState(() => getBackendStatus());
 
   useEffect(() => {
-    // Subscribe to status changes
+    setIsBackendDown(getBackendStatus());
     const unsubscribe = subscribeToBackendStatus((isDown) => {
       setIsBackendDown(isDown);
     });
-
-    // Check initial status
-    setIsBackendDown(getBackendStatus());
-
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
   return isBackendDown;
