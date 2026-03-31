@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { Menu, X, Sparkles } from "lucide-react";
 import ButtonWithIcon from "@/components/ui/button-with-icon";
+import logo1 from "../../../../public/spider logo per.jpg";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -43,7 +44,7 @@ const Navbar = () => {
             <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center">
               <img
                 className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 object-cover rounded-full"
-                src="/public/spider logo per.jpg"
+                src={logo1}
                 alt="WebCore Logo"
               />
             </div>

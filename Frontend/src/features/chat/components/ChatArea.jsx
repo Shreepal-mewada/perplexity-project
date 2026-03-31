@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
+import logo from "../../../assets/spider_logo_2.png";
 
 const ChatArea = ({
   messages = [],
@@ -35,7 +36,7 @@ const ChatArea = ({
                   WebCore
                 </span> */}
 
-                <img src="./public/spider_logo_2.png" alt="" />
+                <img src={logo} alt="" />
               </div>
               <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground font-display text-gray-300">
                 Ask anything...
