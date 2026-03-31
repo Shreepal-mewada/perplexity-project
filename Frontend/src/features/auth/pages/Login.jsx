@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import { useAuth } from "../hooks/useAuth";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Eye, EyeOff } from "lucide-react";
 import ButtonWithIcon from "@/components/ui/button-with-icon";
 import { AnimatedAuthCard } from "@/components/ui/animated-auth-card";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
@@ -121,19 +122,33 @@ function Login() {
             <label className="text-sm font-medium text-foreground">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              autoComplete="current-password"
-              onBlur={() => handleBlur("password")}
-              onChange={handleChangePassword}
-              className={`w-full px-4 py-3 rounded-xl bg-surface/50 border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${
-                errors.password
-                  ? "border-red-500/50 focus:ring-red-500/50 focus:border-red-500"
-                  : "border-border focus:ring-primary/50"
-              }`}
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                autoComplete="current-password"
+                onBlur={() => handleBlur("password")}
+                onChange={handleChangePassword}
+                className={`w-full px-4 pr-11 py-3 rounded-xl bg-surface/50 border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all ${
+                  errors.password
+                    ? "border-red-500/50 focus:ring-red-500/50 focus:border-red-500"
+                    : "border-border focus:ring-primary/50"
+                }`}
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-red-500 font-medium animate-in fade-in slide-in-from-top-1">
                 {errors.password}
