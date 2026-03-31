@@ -1,10 +1,13 @@
 import React, { useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 /**
  * InputBar — ChatGPT-style file + image + message send.
  *
- * Attach button accepts both PDFs and images.
+ * "+" button opens a popover menu with two options:
+ *   1. Upload Image → opens image-only file picker
+ *   2. Upload File / PDF → opens document/PDF file picker
  * If an image is staged → shows thumbnail preview.
  * If a PDF is staged → shows icon + name badge.
  * Routing (PDF vs image) is handled by Dashboard.handleSend via file.type.
@@ -19,7 +22,9 @@ const InputBar = ({
   const [pendingFile, setPendingFile] = useState(null); // file staged, not yet sent
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null); // local blob URL for thumbnail
   const [isSending, setIsSending] = useState(false);
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
 
+  const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const { fileContext } = useSelector((state) => state.chat);
 
@@ -73,7 +78,21 @@ const InputBar = ({
     }
   };
 
-  const handleAttachClick = () => {
+  const handleImageSelect = () => {
+    setUploadMenuOpen(false);
+    if (
+      !disabled &&
+      !isLoading &&
+      !isSending &&
+      !pendingFile &&
+      !isFileProcessing
+    ) {
+      imageInputRef.current?.click();
+    }
+  };
+
+  const handleFileSelect = () => {
+    setUploadMenuOpen(false);
     if (
       !disabled &&
       !isLoading &&
@@ -106,6 +125,7 @@ const InputBar = ({
       URL.revokeObjectURL(imagePreviewUrl);
       setImagePreviewUrl(null);
     }
+    if (imageInputRef.current) imageInputRef.current.value = "";
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -121,11 +141,20 @@ const InputBar = ({
 
   return (
     <div className="w-full px-2 md:px-6 py-2 backdrop-blur-xl shrink-0 bg-background/80">
-      {/* Hidden file input — PDF + Images */}
+      {/* Hidden file input — Images only */}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Hidden file input — PDFs and documents */}
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,application/pdf,image/jpeg,image/png,image/webp"
+        accept=".pdf,application/pdf,.doc,.docx,.txt,.csv,.xlsx"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -195,48 +224,67 @@ const InputBar = ({
       <div className="mx-auto w-[90%] max-w-[1200px]">
         <div className="rounded-full glass p-1.5 md:p-2 premium-shadow ring-1 ring-glass-border">
           <div className="flex items-center gap-1.5 md:gap-2">
-            {/* Attach File Button */}
-            <button
-              className={`h-8 md:h-9 w-8 md:w-9 rounded-xl p-1.5 md:p-2 transition shrink-0 disabled:opacity-50 disabled:cursor-not-allowed
-                ${
-                  pendingFile
-                    ? isImage
-                      ? "text-secondary bg-secondary/10"
-                      : "text-primary bg-primary/10"
-                    : fileContext?.status === "ready"
-                      ? "text-primary bg-primary/10"
-                      : isFileProcessing
-                        ? "text-yellow-400 animate-pulse"
-                        : "text-muted-foreground hover:text-primary hover:bg-surface"
-                }`}
-              title={
-                pendingFile
-                  ? isImage
-                    ? `Image: ${pendingFile.name}`
-                    : `Staged: ${pendingFile.name}`
-                  : fileContext?.status === "ready"
-                    ? `Active: ${fileContext.fileName}`
-                    : isFileProcessing
-                      ? "Uploading file..."
-                      : "Attach PDF or Image"
-              }
-              onClick={handleAttachClick}
-              disabled={
-                disabled ||
-                isLoading ||
-                isSending ||
-                !!pendingFile ||
-                !!isFileProcessing
-              }
-            >
-              <span className="material-symbols-outlined">
-                {pendingFile && isImage
-                  ? "image"
-                  : pendingFile || fileContext
-                    ? "description"
-                    : "attach_file"}
-              </span>
-            </button>
+            {/* Upload Menu Button */}
+            <Popover open={uploadMenuOpen} onOpenChange={setUploadMenuOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  className={`h-8 md:h-9 w-8 md:w-9 rounded-xl p-1.5 md:p-2 transition shrink-0 disabled:opacity-50 disabled:cursor-not-allowed
+                    ${
+                      pendingFile
+                        ? isImage
+                          ? "text-secondary bg-secondary/10"
+                          : "text-primary bg-primary/10"
+                        : fileContext?.status === "ready"
+                          ? "text-primary bg-primary/10"
+                          : isFileProcessing
+                            ? "text-yellow-400 animate-pulse"
+                            : "text-muted-foreground hover:text-primary hover:bg-surface"
+                    }`}
+                  title={
+                    pendingFile
+                      ? isImage
+                        ? `Image: ${pendingFile.name}`
+                        : `Staged: ${pendingFile.name}`
+                      : fileContext?.status === "ready"
+                        ? `Active: ${fileContext.fileName}`
+                        : isFileProcessing
+                          ? "Uploading file..."
+                          : "Upload files"
+                  }
+                  disabled={
+                    disabled ||
+                    isLoading ||
+                    isSending ||
+                    !!pendingFile ||
+                    !!isFileProcessing
+                  }
+                >
+                  <span className="material-symbols-outlined">add</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-48 p-1.5 bg-secondary/95 backdrop-blur-xl border-primary/20 shadow-xl shadow-black/30"
+                align="start"
+                sideOffset={8}
+              >
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={handleImageSelect}
+                    className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-sm text-foreground hover:bg-primary/15 transition-colors text-left"
+                  >
+                    <span className="material-symbols-outlined text-base text-primary">image</span>
+                    <span className="font-medium">Upload Image</span>
+                  </button>
+                  <button
+                    onClick={handleFileSelect}
+                    className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-sm text-foreground hover:bg-primary/15 transition-colors text-left"
+                  >
+                    <span className="material-symbols-outlined text-base text-primary">description</span>
+                    <span className="font-medium">Upload File / PDF</span>
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* Text Input */}
             <textarea
