@@ -27,10 +27,15 @@ const ChatArea = ({
         {isEmpty ? (
           <div className="flex h-full items-center justify-center px-4 md:px-2">
             <div className="mx-auto max-w-3xl text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 text-primary shadow-lg shadow-primary/20">
-                <span className="material-symbols-outlined text-5xl">
+              <div className="mx-auto mb-4 flex h-26 w-36 items-center justify-center rounded-full ">
+                {/* <span
+                  className="text-4xl text-red-400 font-bold"
+                  style={{ fontFamily: "cursive" }}
+                >
                   WebCore
-                </span>
+                </span> */}
+
+                <img src="./public/spider_logo_2.png" alt="" />
               </div>
               <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-foreground font-display text-gray-300">
                 Ask anything...
