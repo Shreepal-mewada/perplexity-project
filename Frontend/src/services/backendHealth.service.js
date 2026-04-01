@@ -4,8 +4,11 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "https://perplexity-project-zac5.onrender.com/api";
 
+// Health endpoint is at the server root, not under /api
+const SERVER_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
+
 const CONFIG = {
-  HEALTH_ENDPOINT: `${API_BASE_URL}/health`,
+  HEALTH_ENDPOINT: `${SERVER_BASE_URL}/health`,
   POLL_INTERVAL: 5000,
   REQUEST_TIMEOUT: 3000,
 };
