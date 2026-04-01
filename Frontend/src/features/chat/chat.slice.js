@@ -56,6 +56,12 @@ const chatSlice = createSlice({
         state.chats[chatId].messages = messages;
       }
     },
+    updateMessage: (state, action) => {
+      const { chatId, index, updates } = action.payload;
+      if (state.chats[chatId]?.messages?.[index] !== undefined) {
+        Object.assign(state.chats[chatId].messages[index], updates);
+      }
+    },
     setLoading: (state, action) => {
       state.isLoading = action.payload;
     },
@@ -103,6 +109,7 @@ export const {
   updateChat,
   addNewMessage,
   addMessages,
+  updateMessage,
   removeChat,
   setFileContext,
   clearFileContext,

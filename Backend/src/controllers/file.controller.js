@@ -8,6 +8,7 @@ import {
 } from "../services/pinecone.service.js";
 import fileUploadModel from "../models/fileUpload.model.js";
 import chatModel from "../models/chat.model.js";
+import messageModel from "../models/message.model.js";
 
 /**
  * POST /api/files/upload
@@ -108,6 +109,27 @@ export async function uploadFile(req, res) {
     chat.fileName = fileName;
     await chat.save();
 
+    // Step 7: Create a file-type message so it persists in chat history
+    const fileMessage = await messageModel.create({
+      chat: chatId,
+      content: "",
+      role: "user",
+      type: "file",
+      fileInfo: {
+        fileName,
+        fileId,
+      },
+    });
+
+    // Step 8: Create AI greeting message for when user uploads without text
+    const aiGreeting = `I've read through **${fileName}**. What would you like to ask about this document?`;
+    const aiMessage = await messageModel.create({
+      chat: chatId,
+      content: aiGreeting,
+      role: "ai",
+      type: "text",
+    });
+
     return res.status(200).json({
       message: "File uploaded and indexed successfully.",
       fileId,
@@ -115,6 +137,8 @@ export async function uploadFile(req, res) {
       chunkCount: chunks.length,
       pageCount,
       status: "ready",
+      fileMessage,
+      aiMessage,
     });
   } catch (err) {
     // Mark as failed with error message

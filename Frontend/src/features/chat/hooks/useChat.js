@@ -13,12 +13,14 @@ import {
   removeChat,
   setFileContext,
   clearFileContext,
+  updateMessage,
 } from "../chat.slice";
 import { useDispatch, useSelector } from "react-redux";
 
 export const useChat = () => {
   const dispatch = useDispatch();
-  const { fileContext } = useSelector((state) => state.chat);
+  const state = useSelector((state) => state);
+  const { fileContext } = state.chat;
 
   async function handleSendMessage({ message, chatId }) {
     try {
@@ -91,11 +93,27 @@ export const useChat = () => {
       const data = await getMessages(chatId);
       const { messages, fileContext: restoredFileContext } = data;
 
-      dispatch(addMessages({ chatId, messages: messages.map((msg) => ({ content: msg.content, role: msg.role })) }));
+      const normalized = messages.map((msg) => {
+        const base = {
+          _id: msg._id,
+          content: msg.content || "",
+          role: msg.role,
+          type: msg.type || "text",
+        };
+        if (msg.type === "image" && msg.imageInfo) {
+          base.fileName = msg.imageInfo.fileName;
+          base.url = msg.imageInfo.url;
+        }
+        if (msg.type === "file" && msg.fileInfo) {
+          base.fileName = msg.fileInfo.fileName;
+          base.fileId = msg.fileInfo.fileId;
+        }
+        return base;
+      });
+
+      dispatch(addMessages({ chatId, messages: normalized }));
       dispatch(setCurrentChatId(chatId));
 
-      // Chat history dictates the file context natively on the backend,
-      // so we don't pin it to the input bar.
       dispatch(clearFileContext());
     } catch (error) {
       dispatch(setError(error.message || "Failed to load messages"));
@@ -159,7 +177,7 @@ export const useChat = () => {
 
       const result = await uploadFile(file, activeChatId);
 
-      // Step 3: Add PDF card and text to chat as a single user message
+      // Step 3: Add PDF card to chat (optimistic, will be updated with server data below)
       dispatch(addNewMessage({
         chatId: activeChatId,
         content: message?.trim() || "",
@@ -168,6 +186,21 @@ export const useChat = () => {
         fileName: result.fileName,
         fileId: result.fileId,
       }));
+
+      // Update optimistic file message with server-persisted data for consistency
+      const msgs = state.chats[activeChatId]?.messages || [];
+      const lastFileIdx = msgs.findLastIndex((m) => m.role === "user" && m.type === "file");
+      if (lastFileIdx !== -1 && result.fileMessage) {
+        dispatch(updateMessage({
+          chatId: activeChatId,
+          index: lastFileIdx,
+          updates: {
+            content: result.fileMessage.content || "",
+            fileName: result.fileMessage.fileInfo?.fileName || result.fileName,
+            fileId: result.fileMessage.fileInfo?.fileId || result.fileId,
+          },
+        }));
+      }
 
       // Clear file context from the input bar natively now that it's sent and linked to chat.
       dispatch(clearFileContext());
@@ -193,15 +226,15 @@ export const useChat = () => {
           dispatch(setLoading(false));
         }
       } else {
-        // If no text was sent, provide an AI greeting to guide the user
-        setTimeout(() => {
+        // If no text was sent, use AI greeting from server response
+        if (result.aiMessage) {
           dispatch(addNewMessage({
             chatId: activeChatId,
-            content: `I've read through **${result.fileName}**. What would you like to ask about this document?`,
-            role: "ai",
+            content: result.aiMessage.content,
+            role: result.aiMessage.role,
             isNewReply: true
           }));
-        }, 600);
+        }
       }
 
       return true; // → InputBar clears the pending file from input
@@ -230,12 +263,10 @@ export const useChat = () => {
       }
     }
 
-    // Step 2: Optimistic UI – Add Image User Message
-    const optimisticMessageId = `opt-${Date.now()}`;
+    // Step 2: Optimistic UI – Add Image User Message (blob URL for instant preview)
     const temporaryUrl = URL.createObjectURL(file);
     dispatch(addNewMessage({
       chatId: activeChatId,
-      id: optimisticMessageId,
       content: message?.trim() || "",
       role: "user",
       type: "image",
@@ -252,6 +283,23 @@ export const useChat = () => {
       formData.append("chatId", activeChatId);
 
       const response = await sendImageMessage(formData);
+
+      // Replace optimistic image message with server-persisted data (real URL, not blob)
+      const msgs = state.chats[activeChatId]?.messages || [];
+      const lastUserIdx = msgs.findLastIndex((m) => m.role === "user" && m.type === "image");
+      if (lastUserIdx !== -1) {
+        const serverUrl = response.userMessage.imageInfo?.url || null;
+        const serverFileName = response.userMessage.imageInfo?.fileName || file.name;
+        dispatch(updateMessage({
+          chatId: activeChatId,
+          index: lastUserIdx,
+          updates: {
+            content: response.userMessage.content || "",
+            url: serverUrl,
+            fileName: serverFileName,
+          },
+        }));
+      }
 
       // Add AI response
       dispatch(addNewMessage({
