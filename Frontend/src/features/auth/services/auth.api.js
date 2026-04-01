@@ -1,6 +1,5 @@
 import axios from "axios";
 import { store } from "../../../app/app.store";
-import { handleApiRequest } from "../../../services/backendHealth.service";
 
 const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
 const ensureApiPath = (baseUrl) => {
@@ -29,38 +28,26 @@ api.interceptors.request.use((config) => {
 });
 
 export async function register({ username, email, password }) {
-  return handleApiRequest(async () => {
-    const response = await api.post("/register", { username, email, password });
-    return response.data;
-  });
+  const response = await api.post("/register", { username, email, password });
+  return response.data;
 }
 
 export async function login({ email, password }) {
-  return handleApiRequest(async () => {
-    const response = await api.post("/login", { email, password });
-    // console.log(response.data);
-    // localStorage.setItem("accessToken", response.data.accessToken);
-    return response.data;
-  });
+  const response = await api.post("/login", { email, password });
+  return response.data;
 }
 
 export async function handleRefresh() {
-  return handleApiRequest(async () => {
-    const response = await api.post("/refresh-token");
-    return response.data;
-  });
+  const response = await api.post("/refresh-token");
+  return response.data;
 }
 
 export async function getMe() {
-  return handleApiRequest(async () => {
-    const response = await api.get("/get-me");
-    return response.data;
-  });
+  const response = await api.get("/get-me");
+  return response.data;
 }
 
 export async function logoutUser() {
-  return handleApiRequest(async () => {
-    const response = await api.get("/logout");
-    return response.data;
-  });
+  const response = await api.get("/logout");
+  return response.data;
 }

@@ -68,7 +68,7 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/images", imageRoutes);
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.status(200).send("Backend is running");
 });
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
