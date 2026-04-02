@@ -143,8 +143,13 @@ export async function sendMessage(req, res) {
           memoryContext
         );
       } else if (ragResult.type === "not_found") {
-        // File-related but no relevant chunks found
-        result = `I couldn't find relevant information about that in the uploaded document **${ragResult.fileName}**. The document may not contain details on this topic, or try rephrasing your question.`;
+        // File-related but no relevant chunks found — try with broader context
+        const recentMessages = await messageModel
+          .find({ chat: activeChatId })
+          .sort({ createdAt: -1 })
+          .limit(15);
+        recentMessages.reverse();
+        result = await generateResponse(recentMessages, memoryContext);
       } else {
         // General question despite active file → normal LLM
         const recentMessages = await messageModel

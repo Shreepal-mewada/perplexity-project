@@ -1,4 +1,5 @@
 import axios from "axios";
+import { store } from "../../../app/app.store";
 
 const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
 const ensureApiPath = (baseUrl) => {
@@ -11,16 +12,19 @@ const API_BASE_URL =
 console.debug("[Frontend] file API base URL:", API_BASE_URL);
 const fileApi = axios.create({
   baseURL: `${API_BASE_URL}/files`,
-  withCredentials: true,
 });
 
-/**
- * Uploads a PDF file to the backend for RAG indexing.
- * @param {File} file — browser File object
- * @param {string} chatId — current chat session ID
- * @param {function} onProgress — optional progress callback
- * @returns {{ fileId, fileName, chunkCount, pageCount, status }}
- */
+fileApi.interceptors.request.use((config) => {
+  const token = store.getState().auth.accessToken;
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return config;
+});
+
 export const uploadFile = async (file, chatId, onProgress) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -39,10 +43,6 @@ export const uploadFile = async (file, chatId, onProgress) => {
   return response.data;
 };
 
-/**
- * Removes a file's vectors from Pinecone and clears it from the chat.
- * @param {string} fileId
- */
 export const removeFile = async (fileId) => {
   const response = await fileApi.delete(`/${fileId}`);
   return response.data;

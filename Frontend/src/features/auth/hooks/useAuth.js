@@ -12,6 +12,7 @@ import {
   setLoading,
   setError,
   setAccessToken,
+  setRefreshToken,
   setMessage,
   clearAuthState,
 } from "../auth.slice";
@@ -45,6 +46,7 @@ export function useAuth() {
         dispatch(setLoading(true));
         const result = await login({ email, password });
         dispatch(setAccessToken(result.accessToken));
+        dispatch(setRefreshToken(result.refreshToken));
         dispatch(setUser(result.user ?? result));
       } catch (error) {
         dispatch(setError(error.response?.data?.message || "Login failed"));
@@ -60,6 +62,9 @@ export function useAuth() {
       dispatch(setLoading(true));
       const result = await refreshApi();
       dispatch(setAccessToken(result.accessToken));
+      if (result.refreshToken) {
+        dispatch(setRefreshToken(result.refreshToken));
+      }
       return result;
     } catch (error) {
       dispatch(setError(error.response?.data?.message || "Refresh failed"));
@@ -94,7 +99,6 @@ export function useAuth() {
     } catch (error) {
       console.error("Logout API failed:", error);
     } finally {
-      // 🔒 SECURITY FIX: Clear ALL state on logout to prevent data leakage
       dispatch(clearAuthState());
       dispatch(resetChatState());
       dispatch(setLoading(false));

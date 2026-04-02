@@ -73,7 +73,7 @@ export async function loginUser(req, res) {
       refreshToken: refreshHash,
       ip: req.ip,
       userAgent: req.headers["user-agent"],
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     const accessToken = jwt.sign(
@@ -84,16 +84,6 @@ export async function loginUser(req, res) {
       },
     );
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    };
-
-    res.cookie("refreshToken", refreshToken, cookieOptions);
-    res.cookie("token", accessToken, cookieOptions);
-
     res.status(200).json({
       message: "Login successful",
       success: true,
@@ -103,6 +93,7 @@ export async function loginUser(req, res) {
         email: user.email,
       },
       accessToken,
+      refreshToken,
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -116,7 +107,11 @@ export async function loginUser(req, res) {
 
 export async function refreshToken(req, res) {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const authHeader = req.headers?.authorization;
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
+    const refreshToken = bearerToken;
 
     if (!refreshToken) {
       return res.status(401).json({
@@ -194,20 +189,11 @@ export async function refreshToken(req, res) {
     matchedSession.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await matchedSession.save();
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    };
-
-    res.cookie("refreshToken", newRefreshToken, cookieOptions);
-    res.cookie("token", accessToken, cookieOptions);
-
     return res.status(200).json({
       message: "Token refreshed successfully",
       success: true,
       accessToken,
+      refreshToken: newRefreshToken,
     });
   } catch (error) {
     console.error("Refresh token error:", error);
@@ -247,41 +233,29 @@ export async function getMe(req, res) {
 
 export async function logoutUser(req, res) {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const authHeader = req.headers?.authorization;
+    const refreshToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
 
-    if (!refreshToken) {
-      return res.status(400).json({
-        message: "Refresh token is required",
-        success: false,
-        err: "Refresh token is required",
-      });
-    }
+    if (refreshToken) {
+      const sessions = await sessionModel.find({ revoked: false });
 
-    const sessions = await sessionModel.find({ revoked: false });
+      let matchedSession = null;
 
-    let matchedSession = null;
+      for (const session of sessions) {
+        const match = await bcrypt.compare(refreshToken, session.refreshToken);
+        if (match) {
+          matchedSession = session;
+          break;
+        }
+      }
 
-    for (const session of sessions) {
-      const match = await bcrypt.compare(refreshToken, session.refreshToken);
-      if (match) {
-        matchedSession = session;
-        break;
+      if (matchedSession) {
+        matchedSession.revoked = true;
+        await matchedSession.save();
       }
     }
-
-    if (!matchedSession) {
-      return res.status(400).json({
-        message: "Invalid refresh token",
-        success: false,
-        err: "Invalid refresh token",
-      });
-    }
-
-    matchedSession.revoked = true;
-    await matchedSession.save();
-
-    res.clearCookie("refreshToken");
-    res.clearCookie("token");
 
     return res.status(200).json({
       message: "Logout successful",

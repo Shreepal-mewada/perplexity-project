@@ -85,7 +85,7 @@ export async function upsertChunks(chunks, namespace, fileId) {
     values: chunk.vector,
     metadata: {
       ...chunk.metadata,
-      text: chunk.text, // store text for retrieval
+      text: chunk.text,
     },
   }));
 
@@ -94,7 +94,34 @@ export async function upsertChunks(chunks, namespace, fileId) {
   for (let i = 0; i < vectors.length; i += BATCH) {
     const batch = vectors.slice(i, i + BATCH);
     if (batch.length === 0) continue;
-    await ns.upsert({ records: batch });
+    const result = await ns.upsert({ records: batch });
+    console.log(`[Pinecone Upsert] Batch ${i / BATCH + 1} upserted. Response:`, JSON.stringify(result));
+  }
+
+  // Verify upsert by querying for the first chunk
+  await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for eventual consistency
+  try {
+    const verifyResult = await ns.query({
+      vector: vectors[0].values,
+      topK: 1,
+      filter: { fileId: { $eq: fileId } },
+      includeMetadata: true,
+    });
+    console.log(`[Pinecone Upsert] Verification query returned ${verifyResult.matches?.length || 0} matches`);
+    if (verifyResult.matches?.length === 0) {
+      console.warn(`[Pinecone Upsert] ⚠️ Verification failed - vectors may not be stored. Checking without filter...`);
+      const verifyNoFilter = await ns.query({
+        vector: vectors[0].values,
+        topK: 1,
+        includeMetadata: true,
+      });
+      console.log(`[Pinecone Upsert] No-filter query returned ${verifyNoFilter.matches?.length || 0} matches`);
+      if (verifyNoFilter.matches?.length > 0) {
+        console.log(`[Pinecone Upsert] Vectors exist but filter mismatch. Stored metadata:`, JSON.stringify(verifyNoFilter.matches[0].metadata));
+      }
+    }
+  } catch (err) {
+    console.error(`[Pinecone Upsert] Verification failed:`, err.message);
   }
 }
 

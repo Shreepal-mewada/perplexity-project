@@ -7,8 +7,8 @@ const messageSchema = new mongoose.Schema({
   type: { type: String, enum: ["text", "file", "image"], default: "text" },
   imageInfo: {
     fileName: String,
-    url: String,
-    mimeType: String
+    mimeType: String,
+    data: String,
   },
   fileInfo: {
     fileName: String,

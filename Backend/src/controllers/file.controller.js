@@ -65,6 +65,7 @@ export async function uploadFile(req, res) {
 
     const { text, pageCount } = await extractTextFromPdf(req.file.buffer);
     fileDoc.pageCount = pageCount;
+    fileDoc.fullText = text;
     
     console.log(`\n[File Processing] Extracted text length: ${text.length} characters from ${pageCount} pages.`);
 
@@ -98,6 +99,10 @@ export async function uploadFile(req, res) {
 
     await upsertChunks(enrichedChunks, namespace, fileId);
     console.log(`[File Processing] Successfully upserted chunks to Pinecone.`);
+
+    // Wait for Pinecone eventual consistency
+    console.log(`[File Processing] Waiting 3s for Pinecone indexing...`);
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Step 5: Mark ready
     fileDoc.status = "ready";

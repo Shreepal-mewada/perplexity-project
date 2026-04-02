@@ -12,12 +12,11 @@ const API_BASE_URL =
 console.debug("[Frontend] auth API base URL:", API_BASE_URL);
 const api = axios.create({
   baseURL: `${API_BASE_URL}/auth`,
-  withCredentials: true,
 });
 
-// Attach accessToken (from Redux state) to every request.
 api.interceptors.request.use((config) => {
-  const token = store.getState().auth.accessToken;
+  const state = store.getState().auth;
+  const token = state.refreshToken || state.accessToken;
   if (token) {
     config.headers = {
       ...config.headers,

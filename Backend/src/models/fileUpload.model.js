@@ -1,10 +1,5 @@
 import mongoose from "mongoose";
 
-/**
- * FileUpload Model
- * Tracks every uploaded PDF file — its processing status,
- * Pinecone namespace, and relationship to a chat session.
- */
 const fileUploadSchema = new mongoose.Schema(
   {
     fileId: {
@@ -30,7 +25,7 @@ const fileUploadSchema = new mongoose.Schema(
       trim: true,
     },
     fileSize: {
-      type: Number, // bytes
+      type: Number,
       default: 0,
     },
     pageCount: {
@@ -42,10 +37,13 @@ const fileUploadSchema = new mongoose.Schema(
       default: 0,
     },
     namespace: {
-      type: String, // e.g. "user-{userId}"
+      type: String,
       required: true,
     },
-    // State machine: uploading → parsing → embedding → indexing → ready | failed
+    fullText: {
+      type: String,
+      default: null,
+    },
     status: {
       type: String,
       enum: ["uploading", "parsing", "embedding", "indexing", "ready", "failed"],

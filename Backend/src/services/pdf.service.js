@@ -12,26 +12,38 @@ export async function extractTextFromPdf(buffer) {
     );
   }
 
+  console.log(`[PDF Extract] Buffer size: ${buffer.length} bytes`);
+
   let data;
   try {
     const parser = new PDFParse({ data: buffer });
     data = await parser.getText();
+    
+    console.log(`[PDF Extract] Raw result type:`, typeof data);
+    console.log(`[PDF Extract] Raw result keys:`, data ? Object.keys(data) : 'null');
+    console.log(`[PDF Extract] Text preview:`, data?.text?.substring(0, 200));
+    console.log(`[PDF Extract] Text length:`, data?.text?.length || 0);
+    console.log(`[PDF Extract] Page count:`, data?.total ?? data?.numpages ?? 0);
   } catch (err) {
+    console.error(`[PDF Extract] Error:`, err.message, err.stack);
     throw new Error(
       `PDF_CORRUPT: The uploaded PDF could not be read. Please ensure it is a valid, uncorrupted PDF file.`,
     );
   }
 
-  const text = data.text?.trim();
+  const text = data?.text?.trim() || "";
 
-  if (!text || text.length < 20) {
-    throw new Error(
-      `PDF_EMPTY: This PDF appears to be empty or image-only (scanned). Text extraction is not supported for image-only PDFs.`,
-    );
+  if (!text || text.length < 5) {
+    console.warn(`[PDF Extract] Extracted text is too short (${text.length} chars). PDF may be image-only.`);
+    // Instead of throwing, return what we have - the MongoDB fallback will still work
+    return {
+      text: text || "[This PDF appears to be image-only with no extractable text]",
+      pageCount: data?.total ?? data?.numpages ?? 0,
+    };
   }
 
   return {
     text,
-    pageCount: data.total ?? data.numpages ?? 0,
+    pageCount: data?.total ?? data?.numpages ?? 0,
   };
 }

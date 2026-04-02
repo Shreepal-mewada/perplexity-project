@@ -1,4 +1,5 @@
 import axios from "axios";
+import { store } from "../../../app/app.store";
 
 const normalizeUrl = (url) => url?.replace(/\/+$/, "") || "";
 const ensureApiPath = (baseUrl) => {
@@ -11,7 +12,17 @@ const API_BASE_URL =
 console.debug("[Frontend] chat API base URL:", API_BASE_URL);
 const api = axios.create({
   baseURL: `${API_BASE_URL}/chats`,
-  withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const token = store.getState().auth.accessToken;
+  if (token) {
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return config;
 });
 
 export const createChat = async ({ title = "New Chat" } = {}) => {
@@ -26,8 +37,13 @@ export const sendMessage = async ({ message, chatId, fileId = null }) => {
 
 export const sendImageMessage = async (formData) => {
   const imageApiUrl = `${API_BASE_URL}/images/chat`;
+  const token = store.getState().auth.accessToken;
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await axios.post(imageApiUrl, formData, {
-    withCredentials: true,
+    headers,
   });
   return response.data;
 };

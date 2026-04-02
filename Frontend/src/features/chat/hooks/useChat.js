@@ -17,6 +17,8 @@ import {
 } from "../chat.slice";
 import { useDispatch, useSelector } from "react-redux";
 
+const getStore = () => window.__REDUX_STORE__;
+
 export const useChat = () => {
   const dispatch = useDispatch();
   const state = useSelector((state) => state);
@@ -102,7 +104,7 @@ export const useChat = () => {
         };
         if (msg.type === "image" && msg.imageInfo) {
           base.fileName = msg.imageInfo.fileName;
-          base.url = msg.imageInfo.url;
+          base.url = msg.imageInfo.data || msg.imageInfo.url || "";
         }
         if (msg.type === "file" && msg.fileInfo) {
           base.fileName = msg.fileInfo.fileName;
@@ -177,6 +179,11 @@ export const useChat = () => {
 
       const result = await uploadFile(file, activeChatId);
 
+      // Track index BEFORE dispatching
+      const store = getStore();
+      const msgsBefore = store.getState().chat.chats[activeChatId]?.messages || [];
+      const optimisticFileIndex = msgsBefore.length;
+
       // Step 3: Add PDF card to chat (optimistic, will be updated with server data below)
       dispatch(addNewMessage({
         chatId: activeChatId,
@@ -187,15 +194,12 @@ export const useChat = () => {
         fileId: result.fileId,
       }));
 
-      // Update optimistic file message with server-persisted data for consistency
-      const msgs = state.chats[activeChatId]?.messages || [];
-      const lastFileIdx = msgs.findLastIndex((m) => m.role === "user" && m.type === "file");
-      if (lastFileIdx !== -1 && result.fileMessage) {
+      // Update optimistic file message with server-persisted data
+      if (result.fileMessage) {
         dispatch(updateMessage({
           chatId: activeChatId,
-          index: lastFileIdx,
+          index: optimisticFileIndex,
           updates: {
-            content: result.fileMessage.content || "",
             fileName: result.fileMessage.fileInfo?.fileName || result.fileName,
             fileId: result.fileMessage.fileInfo?.fileId || result.fileId,
           },
@@ -263,15 +267,25 @@ export const useChat = () => {
       }
     }
 
-    // Step 2: Optimistic UI – Add Image User Message (blob URL for instant preview)
-    const temporaryUrl = URL.createObjectURL(file);
+    // Step 2: Track index BEFORE dispatching so we know exactly where the message will go
+    const store = getStore();
+    const messagesBefore = store.getState().chat.chats[activeChatId]?.messages || [];
+    const optimisticIndex = messagesBefore.length;
+
+    // Create a data URL from the file for instant preview (no blob URL needed)
+    const dataUrl = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+
     dispatch(addNewMessage({
       chatId: activeChatId,
       content: message?.trim() || "",
       role: "user",
       type: "image",
       fileName: file.name,
-      url: temporaryUrl,
+      url: dataUrl,
     }));
 
     dispatch(setLoading(true));
@@ -284,22 +298,18 @@ export const useChat = () => {
 
       const response = await sendImageMessage(formData);
 
-      // Replace optimistic image message with server-persisted data (real URL, not blob)
-      const msgs = state.chats[activeChatId]?.messages || [];
-      const lastUserIdx = msgs.findLastIndex((m) => m.role === "user" && m.type === "image");
-      if (lastUserIdx !== -1) {
-        const serverUrl = response.userMessage.imageInfo?.url || null;
-        const serverFileName = response.userMessage.imageInfo?.fileName || file.name;
-        dispatch(updateMessage({
-          chatId: activeChatId,
-          index: lastUserIdx,
-          updates: {
-            content: response.userMessage.content || "",
-            url: serverUrl,
-            fileName: serverFileName,
-          },
-        }));
-      }
+      // Update optimistic message using the tracked index
+      const serverData = response.userMessage.imageInfo?.data || dataUrl;
+      const serverFileName = response.userMessage.imageInfo?.fileName || file.name;
+      dispatch(updateMessage({
+        chatId: activeChatId,
+        index: optimisticIndex,
+        updates: {
+          content: response.userMessage.content || "",
+          url: serverData,
+          fileName: serverFileName,
+        },
+      }));
 
       // Add AI response
       dispatch(addNewMessage({
@@ -314,7 +324,6 @@ export const useChat = () => {
       dispatch(setError(err.message || "Image processing failed."));
       return false;
     } finally {
-      URL.revokeObjectURL(temporaryUrl);
       dispatch(setLoading(false));
     }
   }

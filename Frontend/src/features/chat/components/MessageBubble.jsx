@@ -60,14 +60,12 @@ const MessageBubble = ({
 
   // ── Image Upload Card ──
   if (type === "image") {
-    // url is a blob URL (optimistic) or a server path like /uploads/images/xxx.jpg
-    const backendHost =
-      import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, "") ||
-      "https://perplexity-project-zac5.onrender.com";
     const imageSrc = url?.startsWith("blob:")
       ? url
+      : url?.startsWith("data:")
+      ? url
       : url
-      ? `${backendHost}${url}`
+      ? `${import.meta.env.VITE_API_BASE_URL?.replace(/\/api$/, "") || "https://perplexity-project-zac5.onrender.com"}${url}`
       : null;
 
     return (
