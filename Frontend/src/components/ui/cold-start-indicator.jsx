@@ -2,12 +2,15 @@ import React from "react";
 
 export function ColdStartIndicator() {
   return (
-    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-white text-sm shadow-2xl">
-      <div className="relative w-4 h-4">
-        <div className="absolute inset-0 rounded-full border-2 border-white/20" />
-        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-primary animate-spin" />
+    <div className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 text-white shadow-2xl">
+      <div className="relative w-10 h-10">
+        <div className="absolute inset-0 rounded-full border-3 border-white/20" />
+        <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-primary animate-spin" />
       </div>
-      <span className="font-medium">Server is waking up...</span>
+      <div className="flex flex-col items-center gap-1">
+        <span className="font-semibold text-lg">Server is waking up...</span>
+        <span className="text-white/50 text-sm">This may take up to 2 minutes</span>
+      </div>
     </div>
   );
 }
