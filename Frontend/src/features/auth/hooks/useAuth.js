@@ -17,6 +17,7 @@ import {
   clearAuthState,
 } from "../auth.slice";
 import { resetChatState } from "../../chat/chat.slice";
+import { store } from "../../../app/app.store";
 
 export function useAuth() {
   const dispatch = useDispatch();
@@ -58,23 +59,31 @@ export function useAuth() {
   );
 
   const handleRefresh = useCallback(async () => {
-    try {
-      dispatch(setLoading(true));
-      const result = await refreshApi();
-      dispatch(setAccessToken(result.accessToken));
-      if (result.refreshToken) {
-        dispatch(setRefreshToken(result.refreshToken));
+      const state = store.getState().auth;
+      if (!state.refreshToken) {
+        return null;
       }
-      return result;
-    } catch (error) {
-      dispatch(setError(error.response?.data?.message || "Refresh failed"));
-      return null;
-    } finally {
-      dispatch(setLoading(false));
-    }
-  }, [dispatch]);
+      try {
+        dispatch(setLoading(true));
+        const result = await refreshApi();
+        dispatch(setAccessToken(result.accessToken));
+        if (result.refreshToken) {
+          dispatch(setRefreshToken(result.refreshToken));
+        }
+        return result;
+      } catch (error) {
+        dispatch(setError(error.response?.data?.message || "Refresh failed"));
+        return null;
+      } finally {
+        dispatch(setLoading(false));
+      }
+    }, [dispatch]);
 
   const handleGetme = useCallback(async () => {
+    const state = store.getState().auth;
+    if (!state.accessToken) {
+      return null;
+    }
     try {
       dispatch(setLoading(true));
       const user = await getMe();
