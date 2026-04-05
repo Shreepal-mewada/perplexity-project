@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./MessageBubble.css";
+import CodeBlock from "./CodeBlock";
 
 const MessageBubble = ({
   message,
@@ -236,7 +237,18 @@ const MessageBubble = ({
               title={isTyping ? "Click to skip animation" : ""}
               style={{ cursor: isTyping ? "pointer" : "default" }}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  pre({ children, className, ...props }) {
+                    return (
+                      <CodeBlock className={className} {...props}>
+                        {children}
+                      </CodeBlock>
+                    );
+                  },
+                }}
+              >
                 {displayedText + (isTyping ? " ▌" : "")}
               </ReactMarkdown>
             </div>

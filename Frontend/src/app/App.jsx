@@ -57,8 +57,18 @@ function WakeUpScreen({ elapsedSeconds }) {
           </span>
 
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-            <svg className="w-4 h-4 text-primary/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-4 h-4 text-primary/70"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <span className="text-white/70 text-sm font-medium tabular-nums">
               {elapsedSeconds}s elapsed
@@ -66,7 +76,7 @@ function WakeUpScreen({ elapsedSeconds }) {
           </div>
 
           <span className="text-white/40 text-xs">
-            Server usually starts within 20–30 seconds
+            Server usually starts within 20–40 seconds
           </span>
         </div>
 
