@@ -22,15 +22,56 @@ export async function registerUser(req, res) {
       });
     }
 
-    await userModel.create({
+    const newUser = await userModel.create({
       username,
       email,
       password,
     });
 
+    // Auto-login after registration
+    const refreshToken = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    const refreshHash = await bcrypt.hash(refreshToken, 10);
+
+    const session = await sessionModel.create({
+      user: newUser._id,
+      refreshToken: refreshHash,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    const accessToken = jwt.sign(
+      { id: newUser._id, sessionId: session._id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      },
+    );
+
     res.status(201).json({
-      message: "Registration successful. Please log in to continue.",
+      message: "Registration successful",
       success: true,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+      },
+      accessToken,
+      refreshToken,
+    });
+    console.log("Registration response sent:", {
+      message: "Registration successful",
+      success: true,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+      },
+      accessToken: accessToken ? "present" : "missing",
+      refreshToken: refreshToken ? "present" : "missing",
     });
   } catch (error) {
     console.error("Register error:", error);

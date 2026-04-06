@@ -28,17 +28,33 @@ export function useAuth() {
       try {
         dispatch(setLoading(true));
         const response = await register({ username, email, password });
-        dispatch(setMessage(response.message || "Registration successful"));
+        console.log("Registration response:", response);
+        if (response.success) {
+          if (response.accessToken) {
+            dispatch(setAccessToken(response.accessToken));
+          }
+          if (response.refreshToken) {
+            dispatch(setRefreshToken(response.refreshToken));
+          }
+          if (response.user) {
+            console.log("Setting user:", response.user);
+            dispatch(setUser(response.user));
+          }
+          dispatch(setMessage(response.message || "Registration successful"));
+        } else {
+          dispatch(setError(response.message || "Registration failed"));
+        }
         return response;
       } catch (error) {
+        console.error("Registration error:", error);
         dispatch(
-          setError(error.response?.data?.message || "Registration failed")
+          setError(error.response?.data?.message || "Registration failed"),
         );
       } finally {
         dispatch(setLoading(false));
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleLogin = useCallback(
@@ -55,7 +71,7 @@ export function useAuth() {
         dispatch(setLoading(false));
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
   const handleGoogleAuth = useCallback(
@@ -68,36 +84,39 @@ export function useAuth() {
         dispatch(setUser(result.user ?? result));
         return result;
       } catch (error) {
-        dispatch(setError(error.response?.data?.message || "Google Authentication failed"));
+        dispatch(
+          setError(
+            error.response?.data?.message || "Google Authentication failed",
+          ),
+        );
         throw error;
       } finally {
         dispatch(setLoading(false));
       }
     },
-    [dispatch]
+    [dispatch],
   );
 
-
   const handleRefresh = useCallback(async () => {
-      const state = store.getState().auth;
-      if (!state.refreshToken) {
-        return null;
+    const state = store.getState().auth;
+    if (!state.refreshToken) {
+      return null;
+    }
+    try {
+      dispatch(setLoading(true));
+      const result = await refreshApi();
+      dispatch(setAccessToken(result.accessToken));
+      if (result.refreshToken) {
+        dispatch(setRefreshToken(result.refreshToken));
       }
-      try {
-        dispatch(setLoading(true));
-        const result = await refreshApi();
-        dispatch(setAccessToken(result.accessToken));
-        if (result.refreshToken) {
-          dispatch(setRefreshToken(result.refreshToken));
-        }
-        return result;
-      } catch (error) {
-        dispatch(setError(error.response?.data?.message || "Refresh failed"));
-        return null;
-      } finally {
-        dispatch(setLoading(false));
-      }
-    }, [dispatch]);
+      return result;
+    } catch (error) {
+      dispatch(setError(error.response?.data?.message || "Refresh failed"));
+      return null;
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }, [dispatch]);
 
   const handleGetme = useCallback(async () => {
     const state = store.getState().auth;
@@ -113,8 +132,8 @@ export function useAuth() {
     } catch (error) {
       dispatch(
         setError(
-          error.response?.data?.message || "Failed to fetch user details"
-        )
+          error.response?.data?.message || "Failed to fetch user details",
+        ),
       );
     } finally {
       dispatch(setLoading(false));

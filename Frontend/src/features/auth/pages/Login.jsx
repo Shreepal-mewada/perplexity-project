@@ -6,6 +6,7 @@ import { Sparkles, Eye, EyeOff } from "lucide-react";
 import ButtonWithIcon from "@/components/ui/button-with-icon";
 import { AnimatedAuthCard } from "@/components/ui/animated-auth-card";
 import { GoogleLogin } from "@react-oauth/google";
+import logo1 from "../../../../public/spider_logo_2.png";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -70,33 +71,30 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-4">
       <AnimatedAuthCard>
-        <div className="text-center space-y-3 relative z-10">
-          <NavLink to="/" className="inline-flex items-center gap-2.5 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <Sparkles className="w-6 h-6 text-primary-foreground" />
+        <div className="text-center space-y-2 relative z-10">
+          <NavLink to="/" className="inline-flex items-center gap-2.5 mb-1">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+              <img src={logo1} alt="Logo" />
             </div>
-            <span className="font-display text-2xl font-bold text-foreground">
+            <span className="font-display text-xl font-bold text-foreground">
               WebCore AI
             </span>
           </NavLink>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs">
             Welcome back. Sign in to continue.
           </p>
         </div>
 
         {globalError &&
           !globalError.toLowerCase().includes("refresh token") && (
-            <div className="p-3 mt-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm text-center font-medium relative z-10 relative z-10">
+            <div className="p-2 mt-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-xs text-center font-medium relative z-10">
               {globalError}
             </div>
           )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4 relative z-10 mt-6 mt-6"
-        >
+        <form onSubmit={handleSubmit} className="space-y-6 relative z-10 mt-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">Email</label>
             <input
@@ -160,24 +158,24 @@ function Login() {
           <ButtonWithIcon
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-primary-foreground glow-blue-sm disabled:opacity-70 mt-4 flex items-center justify-center gap-2 transition-all"
+            className="w-full bg-primary text-primary-foreground glow-blue-sm disabled:opacity-70 mt-3 flex items-center justify-center gap-2 transition-all text-sm py-2"
           >
             {loading ? "Signing In..." : "Sign In"}
           </ButtonWithIcon>
         </form>
 
-        <div className="relative mt-6 relative z-10 w-full flex items-center justify-center">
+        <div className="relative mt-3 relative z-10 w-full flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-border/40"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#121212] px-2 text-muted-foreground w-fit rounded z-10">
+            <span className="bg-[#121212] px-2 text-muted-foreground w-fit rounded z-10 text-xs">
               Or continue with
             </span>
           </div>
         </div>
 
-        <div className="mt-4 relative z-10 flex justify-center w-full">
+        <div className="mt-2 relative z-10 flex justify-center w-full">
           <GoogleLogin
             onSuccess={(credentialResponse) => {
               handleGoogleAuth(credentialResponse.credential);
@@ -190,7 +188,7 @@ function Login() {
           />
         </div>
 
-        <p className="text-center text-sm text-muted-foreground pt-6 relative z-10">
+        <p className="text-center text-xs text-muted-foreground pt-1 relative z-10">
           Don't have an account?{" "}
           <NavLink
             to="/register"
