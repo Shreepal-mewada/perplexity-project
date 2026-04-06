@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Sparkles, Eye, EyeOff } from "lucide-react";
 import ButtonWithIcon from "@/components/ui/button-with-icon";
 import { AnimatedAuthCard } from "@/components/ui/animated-auth-card";
+import { GoogleLogin } from "@react-oauth/google";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -13,7 +14,7 @@ function Login() {
   const [errors, setErrors] = useState({});
 
   const navigate = useNavigate();
-  const { handleLogin } = useAuth();
+  const { handleLogin, handleGoogleAuth } = useAuth();
   const user = useSelector((state) => state.auth.user);
   const loading = useSelector((state) => state.auth.loading);
   const globalError = useSelector((state) => state.auth.error);
@@ -161,37 +162,35 @@ function Login() {
             disabled={loading}
             className="w-full bg-primary text-primary-foreground glow-blue-sm disabled:opacity-70 mt-4 flex items-center justify-center gap-2 transition-all"
           >
-            {loading ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Signing In...
-              </>
-            ) : (
-              "Sign In"
-            )}
+            {loading ? "Signing In..." : "Sign In"}
           </ButtonWithIcon>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground pt-6 border-t border-border/40 relative z-10">
+        <div className="relative mt-6 relative z-10 w-full flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border/40"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[#121212] px-2 text-muted-foreground w-fit rounded z-10">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 relative z-10 flex justify-center w-full">
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              handleGoogleAuth(credentialResponse.credential);
+            }}
+            onError={() => {
+              console.log("Google Login Failed");
+            }}
+            theme="filled_black"
+            shape="circle"
+          />
+        </div>
+
+        <p className="text-center text-sm text-muted-foreground pt-6 relative z-10">
           Don't have an account?{" "}
           <NavLink
             to="/register"

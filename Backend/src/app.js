@@ -41,9 +41,9 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 const allowedOrigins = [
   "http://localhost:5173",
-  process.env.FRONTEND_URL,
+  process.env.Frontend_URL,
   "https://perplexity-project-15i6gt7j0-shreepal-mewadas-projects.vercel.app",
-  "https://perplexity-project-neon.vercel.app",
+  "https://perplexity-project-zac5.onrender.com",
 ].filter(Boolean);
 
 app.use(
@@ -74,4 +74,4 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-export default app ;
+export default app;

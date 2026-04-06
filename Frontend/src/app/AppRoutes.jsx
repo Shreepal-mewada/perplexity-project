@@ -6,6 +6,7 @@ import Dashboard from "../features/chat/pages/Dashboard";
 import Protected from "../features/auth/components/Protected";
 import PublicRoute from "../features/auth/components/PublicRoute";
 import Landing from "../features/landing/pages/Landing";
+import VerifyEmail from "../features/auth/pages/VerifyEmail";
 
 function AppRoutes() {
   return (
@@ -28,6 +29,13 @@ function AppRoutes() {
         <PublicRoute>
           <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
             <Register />
+          </div>
+        </PublicRoute>
+      } />
+      <Route path="/verify-email" element={
+        <PublicRoute>
+          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+            <VerifyEmail />
           </div>
         </PublicRoute>
       } />

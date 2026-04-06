@@ -6,6 +6,7 @@ import {
   getMe,
   handleRefresh as refreshApi,
   logoutUser,
+  googleAuthAPI,
 } from "../services/auth.api";
 import {
   setUser,
@@ -26,10 +27,9 @@ export function useAuth() {
     async ({ username, email, password }) => {
       try {
         dispatch(setLoading(true));
-        const user = await register({ username, email, password });
-        dispatch(setUser(user));
-        dispatch(setMessage("Registration successful"));
-        return user;
+        const response = await register({ username, email, password });
+        dispatch(setMessage(response.message || "Registration successful"));
+        return response;
       } catch (error) {
         dispatch(
           setError(error.response?.data?.message || "Registration failed")
@@ -57,6 +57,26 @@ export function useAuth() {
     },
     [dispatch]
   );
+
+  const handleGoogleAuth = useCallback(
+    async (credential) => {
+      try {
+        dispatch(setLoading(true));
+        const result = await googleAuthAPI(credential);
+        dispatch(setAccessToken(result.accessToken));
+        dispatch(setRefreshToken(result.refreshToken));
+        dispatch(setUser(result.user ?? result));
+        return result;
+      } catch (error) {
+        dispatch(setError(error.response?.data?.message || "Google Authentication failed"));
+        throw error;
+      } finally {
+        dispatch(setLoading(false));
+      }
+    },
+    [dispatch]
+  );
+
 
   const handleRefresh = useCallback(async () => {
       const state = store.getState().auth;
@@ -120,5 +140,6 @@ export function useAuth() {
     handleRefresh,
     handleGetme,
     handleLogout,
+    handleGoogleAuth,
   };
 }

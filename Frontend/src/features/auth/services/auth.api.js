@@ -50,3 +50,13 @@ export async function logoutUser() {
   const response = await api.get("/logout");
   return response.data;
 }
+
+export async function verifyEmail(token) {
+  const response = await api.get(`/verify-email?token=${token}`);
+  return response.data;
+}
+
+export async function googleAuthAPI(credential) {
+  const response = await api.post("/google", { credential });
+  return response.data;
+}

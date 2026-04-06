@@ -4,6 +4,10 @@ import AppRoutes from "./AppRoutes";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { useSelector, useDispatch } from "react-redux";
 import { resetChatState } from "../features/chat/chat.slice";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_CLIENT_ID || "your_client_id_here";
+
 
 const SERVER_BASE_URL =
   import.meta.env.VITE_SOCKET_URL ||
@@ -207,9 +211,11 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 

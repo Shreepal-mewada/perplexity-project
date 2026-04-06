@@ -23,6 +23,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
+    "google-auth-library": "^10.6.2",
     "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.3",
     "langchain": "^1.2.31",
@@ -31,6 +32,7 @@
     "multer": "^2.1.1",
     "nodemailer": "^8.0.2",
     "pdf-parse": "^2.4.5",
+    "resend": "^6.10.0",
     "socket.io": "^4.8.3",
     "uuid": "^13.0.0",
     "zod": "^4.3.6"
