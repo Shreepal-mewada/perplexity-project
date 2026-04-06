@@ -6,46 +6,50 @@ import Dashboard from "../features/chat/pages/Dashboard";
 import Protected from "../features/auth/components/Protected";
 import PublicRoute from "../features/auth/components/PublicRoute";
 import Landing from "../features/landing/pages/Landing";
-import VerifyEmail from "../features/auth/pages/VerifyEmail";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={
-        <PublicRoute>
-          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
-            <Landing />
-          </div>
-        </PublicRoute>
-      } />
-      <Route path="/login" element={
-        <PublicRoute>
-          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
-            <Login />
-          </div>
-        </PublicRoute>
-      } />
-      <Route path="/register" element={
-        <PublicRoute>
-          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
-            <Register />
-          </div>
-        </PublicRoute>
-      } />
-      <Route path="/verify-email" element={
-        <PublicRoute>
-          <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
-            <VerifyEmail />
-          </div>
-        </PublicRoute>
-      } />
-      <Route path="/dashboard" element={
-        <Protected>
-          <div className="animate-in fade-in duration-700 ease-out h-full w-full">
-            <Dashboard />
-          </div>
-        </Protected>
-      } />
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+              <Landing />
+            </div>
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+              <Login />
+            </div>
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <div className="animate-in fade-in zoom-in-[0.99] duration-500 ease-out h-full w-full">
+              <Register />
+            </div>
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/dashboard"
+        element={
+          <Protected>
+            <div className="animate-in fade-in duration-700 ease-out h-full w-full">
+              <Dashboard />
+            </div>
+          </Protected>
+        }
+      />
     </Routes>
   );
 }

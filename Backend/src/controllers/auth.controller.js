@@ -1,10 +1,7 @@
-import { validationResult } from "express-validator";
 import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import sessionModel from "../models/session.model.js";
 import bcrypt from "bcryptjs/dist/bcrypt.js";
-import crypto from "crypto";
-import { sendVerificationEmail } from "../services/email.service.js";
 import { OAuth2Client } from "google-auth-library";
 
 const googleClient = new OAuth2Client(process.env.CLIENT_ID);
@@ -25,40 +22,14 @@ export async function registerUser(req, res) {
       });
     }
 
-    if (!process.env.FRONTEND_URL) {
-      console.error("FRONTEND_URL environment variable is missing");
-      return res.status(500).json({
-        message: "Server configuration error",
-        success: false,
-        err: "FRONTEND_URL environment variable is missing",
-      });
-    }
-
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const verificationTokenExpires = new Date(Date.now() + 3600000); // 1 hour
-
-    // Create new user
-    const newUser = await userModel.create({
+    await userModel.create({
       username,
       email,
       password,
-      isVerified: false,
-      verificationToken,
-      verificationTokenExpires,
     });
 
-    const verificationLink = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
-
-    try {
-      await sendVerificationEmail(email, username, verificationLink);
-    } catch (emailError) {
-      // Rollback user creation if email fails so they aren't stuck unverified
-      await userModel.findByIdAndDelete(newUser._id);
-      throw emailError; // pass to the outer catch handler
-    }
-
     res.status(201).json({
-      message: "Verification email sent. Please check your inbox.",
+      message: "Registration successful. Please log in to continue.",
       success: true,
     });
   } catch (error) {
@@ -80,14 +51,6 @@ export async function loginUser(req, res) {
         message: "Invalid email or password",
         success: false,
         err: "Invalid email or password",
-      });
-    }
-
-    if (!user.isVerified) {
-      return res.status(403).json({
-        message: "Please verify your email before logging in.",
-        success: false,
-        err: "Email not verified",
       });
     }
     const isMatch = await user.comparePassword(password);
@@ -363,65 +326,13 @@ export async function logoutAllUser(req, res) {
   }
 }
 
-export async function verifyEmail(req, res) {
-  try {
-    const { token } = req.query;
-    if (!token) {
-      return res.status(400).json({
-        message: "Verification token is required",
-        success: false,
-      });
-    }
-
-    const user = await userModel.findOne({ verificationToken: token });
-
-    if (!user) {
-      // Check if maybe already verified
-      return res.status(400).json({
-        message: "Invalid or expired token. If you already verified, please log in.",
-        success: false,
-      });
-    }
-
-    if (user.isVerified) {
-      return res.status(200).json({
-        message: "Email is already verified. Please log in.",
-        success: true,
-        alreadyVerified: true,
-      });
-    }
-
-    if (user.verificationTokenExpires < new Date()) {
-      return res.status(400).json({
-        message: "Verification token has expired",
-        success: false,
-      });
-    }
-
-    user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpires = undefined;
-    await user.save();
-
-    return res.status(200).json({
-      message: "Email verified successfully.",
-      success: true,
-    });
-  } catch (error) {
-    console.error("Verify email error:", error);
-    res.status(500).json({
-      message: "Error verifying email",
-      success: false,
-      err: error.message,
-    });
-  }
-}
-
 export async function googleAuth(req, res) {
   try {
     const { credential } = req.body;
     if (!credential) {
-      return res.status(400).json({ success: false, message: "Google credential is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Google credential is required" });
     }
 
     const ticket = await googleClient.verifyIdToken({
@@ -439,12 +350,11 @@ export async function googleAuth(req, res) {
       if (!user.googleId) {
         user.googleId = googleId;
         user.avatar = user.avatar || avatar;
-        user.isVerified = true;
         await user.save();
       }
     } else {
       // Ensure we have a username, use email prefix if missing
-      const baseUsername = email.split('@')[0];
+      const baseUsername = email.split("@")[0];
       let username = baseUsername;
       let counter = 1;
       while (await userModel.findOne({ username })) {
@@ -455,10 +365,9 @@ export async function googleAuth(req, res) {
       user = await userModel.create({
         username,
         email,
-        authProvider: 'google',
+        authProvider: "google",
         googleId,
         avatar,
-        isVerified: true
       });
     }
 
@@ -479,7 +388,7 @@ export async function googleAuth(req, res) {
     const accessToken = jwt.sign(
       { id: user._id, sessionId: session._id },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "15m" },
     );
 
     res.status(200).json({
@@ -489,7 +398,7 @@ export async function googleAuth(req, res) {
         id: user._id,
         username: user.username,
         email: user.email,
-        avatar: user.avatar
+        avatar: user.avatar,
       },
       accessToken,
       refreshToken,
@@ -499,8 +408,7 @@ export async function googleAuth(req, res) {
     res.status(500).json({
       success: false,
       message: "Google authentication failed",
-      err: error.message
+      err: error.message,
     });
   }
 }
-

@@ -90,20 +90,23 @@ function Register() {
                 WebCore AI
               </span>
             </NavLink>
-            <h2 className="text-2xl font-bold text-foreground">Check your email</h2>
+            <h2 className="text-2xl font-bold text-foreground">
+              Registration successful
+            </h2>
           </div>
-          
+
           <div className="py-6 text-center text-muted-foreground relative z-10">
-              Verification email sent to <span className="font-medium text-foreground">{email}</span>. Please check your inbox and click the verification link to activate your account.
+            Your account has been created successfully. You can now log in with
+            your credentials.
           </div>
 
           <div className="pt-4 text-center relative z-10">
-              <NavLink
+            <NavLink
               to="/login"
               className="w-full inline-block bg-primary text-primary-foreground px-4 py-3 rounded-xl glow-blue-sm font-medium transition-all"
-              >
+            >
               Go to Login
-              </NavLink>
+            </NavLink>
           </div>
         </AnimatedAuthCard>
       </div>
