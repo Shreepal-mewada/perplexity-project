@@ -43,6 +43,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   process.env.Frontend_URL,
   "https://perplexity-project-15i6gt7j0-shreepal-mewadas-projects.vercel.app",
+  "https://perplexity-project-neon.vercel.app",
   "https://perplexity-project-zac5.onrender.com",
 ].filter(Boolean);
 
